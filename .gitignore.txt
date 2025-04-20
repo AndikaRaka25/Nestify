@@ -1,0 +1,24 @@
+# File konfigurasi lokal (berisi password dll)
+# Buat file config.example.php sebagai gantinya yg di-commit
+config.php
+.env
+
+# Folder dependensi Composer
+/vendor/
+
+# File log
+*.log
+logs/
+
+# File sistem operasi
+.DS_Store
+Thumbs.db
+
+# Folder bawaan XAMPP atau file yg tidak relevan dgn KODE APLIKASI
+# Sesuaikan jika ada
+# /xampp/
+# /htdocs/ (jika Nestify ada di dalam subfolder htdocs, JANGAN ignore htdocs!)
+# /mysql/data/ # JANGAN PERNAH commit data database langsung
+
+# File upload pengguna (jika ada folder khusus)
+/uploads/
