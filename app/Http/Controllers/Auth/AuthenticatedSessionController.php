@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\Controller;
+use App\Models\User;
 
 class AuthenticatedSessionController extends Controller
 {
@@ -20,17 +21,34 @@ class AuthenticatedSessionController extends Controller
     }
 
     public function handleAuthentication(Request $request)
-    {
-        if (method_exists($this, 'authenticated')) {
-            return $this->authenticated($request, Auth::guard()->user());
+{
+    $user = Auth::guard()->user(); // Dapatkan user yang baru login
+
+    $redirectRoute = '/'; // Default fallback route
+
+    if ($user instanceof User && method_exists($user, 'hasRole')) {
+        if ($user->hasRole('admin')) {
+            $redirectRoute = 'filament.admin.dashboard'; // Route ke admin dashboard
+        } elseif ($user->hasRole('user')) {
+            $redirectRoute = 'filament.user.dashboard'; // Route ke user dashboard
         }
-
-        // Autentikasi berhasil
-        $request->session()->regenerate();
-
-        // Redirect ke halaman dashboard Filament setelah login
-        return redirect()->route('filament::dashboard')->with('success', 'Login berhasil!');
     }
+
+    $request->session()->regenerate(); // Regenerate session setelah login
+
+    // Arahkan ke route yang sesuai
+    return redirect()->route($redirectRoute)->with('success', 'Login berhasil!');
+}
+    
+        public function destroy(Request $request)
+        {
+            Auth::guard()->logout();
+    
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+    
+            return redirect('/')->with('success', 'Logout berhasil!');
+        }
 
 }
 

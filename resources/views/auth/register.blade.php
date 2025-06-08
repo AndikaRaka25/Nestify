@@ -29,6 +29,17 @@
                 <x-input id="password_confirmation" class="block mt-1 w-full" type="password" name="password_confirmation" required autocomplete="new-password" />
             </div>
 
+            <div class="mt-4">
+                <x-label for="role" value="{{ __('Daftar sebagai') }}" />
+                <select name="role" id="role" class="block mt-1 w-full border-gray-300 focus:border-indigo-500 focus:ring-indigo-500 rounded-md shadow-sm" required>
+                    <option value="" disabled selected>{{ __('Pilih peran Anda') }}</option>
+                    <option value="user">{{ __('Penghuni Kos') }}</option>
+                    <option value="admin">{{ __('Pemilik Properti') }}</option> {{-- Pastikan value 'admin' dan 'user' sesuai nama role di database --}}
+                </select>
+                {{-- Tampilkan error validasi jika ada --}}
+                <x-input-error for="role" class="mt-2" />
+            </div>
+
             @if (Laravel\Jetstream\Jetstream::hasTermsAndPrivacyPolicyFeature())
                 <div class="mt-4">
                     <x-label for="terms">
