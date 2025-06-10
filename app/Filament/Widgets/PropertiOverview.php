@@ -97,7 +97,7 @@ class PropertiOverview extends BaseWidget
                 foreach ($fotos as $index => $fotoPath) {
                     if (empty($fotoPath) || !is_string($fotoPath)) continue;
                     try {
-                        $imageUrl = Storage::disk('public')->url($fotoPath);
+                        $imageUrl = asset('storage/' . ltrim($fotoPath, '/'));
                     } catch (\Exception $e) {
                         $imageUrl = ''; // Kosongkan jika error
                     }
@@ -127,7 +127,7 @@ class PropertiOverview extends BaseWidget
             } else {
                 // Fallback jika tidak ada foto
                 try {
-                     $noImageUrl = Storage::disk('public')->url('no-image.png'); // Asumsi no-image.png ada di root public storage
+                     $noImageUrl = Storage::url('no-image.png'); // Asumsi no-image.png ada di root public storage
                 } catch (\Exception $e) { $noImageUrl = ''; }
             
                 if (!empty($noImageUrl)) {

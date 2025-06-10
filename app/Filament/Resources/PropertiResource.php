@@ -87,11 +87,9 @@ class PropertiResource extends Resource
                                 ->label('Foto Properti (Bisa Lebih dari Satu)') 
                                 ->multiple() 
                                 ->reorderable() 
-                                ->appendFiles() 
-                                ->image()
-                                ->imageEditor()
+                                ->disk('public')
                                 ->directory('kos_foto') 
-                                ->imagePreviewHeight('150')
+                                ->imageEditor()
                                 ->maxFiles(5)
                             ]),
                         Forms\Components\Section::make('Silahkan Pilih pada Map')

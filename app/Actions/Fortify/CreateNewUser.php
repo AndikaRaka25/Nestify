@@ -36,7 +36,11 @@ class CreateNewUser implements CreatesNewUsers
         ]);
 
         // 2. Tetapkan role berdasarkan input dari form
-        $user->assignRole($input['role']);
+        if ($input['role'] === 'pemilik_kos') {
+        $user->assignRole('pemilik_kos');
+    } else {
+        $user->assignRole('penghuni_kos');
+    }
 
         // 3. Kembalikan user yang sudah dibuat dan diberi role
         return $user;
