@@ -15,19 +15,7 @@ class LoginResponse implements LoginResponseContract
      */
     public function toResponse($request)
     {
-        $user = $request->user();
-
-        // Jika pengguna adalah pemilik kos, arahkan ke dashboard admin
-        if ($user->hasRole('pemilik_kos')) {
-            return redirect()->route('filament.admin.pages.dashboard');
-        }
-
-        // Jika pengguna adalah penghuni kos, arahkan ke dashboard user
-        if ($user->hasRole('penghuni_kos')) {
-            return redirect()->route('filament.user.pages.dashboard');
-        }
-
-        // Pengarahan default jika tidak memiliki peran di atas
-        return redirect(config('fortify.home'));
+        // Redirect to the intended URL or a default route
+        return new RedirectResponse(url('/admin')); // Ganti 'dashboard' dengan rute yang sesuai
     }
 }

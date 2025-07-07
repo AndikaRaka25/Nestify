@@ -24,7 +24,6 @@ class CreateNewUser implements CreatesNewUsers
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'password' => $this->passwordRules(),
-            'role' => ['required', 'string', Rule::in(['admin', 'user'])], // Validasi role
             'terms' => Jetstream::hasTermsAndPrivacyPolicyFeature() ? ['accepted', 'required'] : '',
         ])->validate();
 
@@ -35,14 +34,7 @@ class CreateNewUser implements CreatesNewUsers
             'password' => Hash::make($input['password']),
         ]);
 
-        // 2. Tetapkan role berdasarkan input dari form
-        if ($input['role'] === 'pemilik_kos') {
-        $user->assignRole('pemilik_kos');
-    } else {
-        $user->assignRole('penghuni_kos');
-    }
-
-        // 3. Kembalikan user yang sudah dibuat dan diberi role
+        
         return $user;
     }
 }
