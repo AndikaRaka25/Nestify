@@ -24,7 +24,8 @@ use Filament\Forms\Components\Placeholder;
 use App\Filament\Resources\PropertiResource\Pages;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Filament\Resources\PropertiResource\RelationManagers;
-use Symfony\Component\HttpKernel\Attribute\MapQueryString;
+use Symfony\Component\HttpKernel\Attribute\MapQueryString; 
+use Illuminate\Support\Facades\Auth;
 
 class PropertiResource extends Resource
 {
@@ -115,6 +116,9 @@ class PropertiResource extends Resource
     ]);
 }
 
+
+    
+    
 public static function getNavigationBadge(): ?string
 {
     return static::getModel()::count();
@@ -136,5 +140,6 @@ public static function getNavigationBadge(): ?string
             'view' => Pages\ViewProperti::route('/{record}/view'),
         ];
     }
+    
     
 }

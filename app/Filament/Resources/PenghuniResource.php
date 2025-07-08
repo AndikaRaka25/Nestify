@@ -137,8 +137,7 @@ class PenghuniResource extends Resource
                                         ->label('Upload Foto KTP')
                                         ->image()
                                         ->disk('public')
-                                        ->directory('penghuni/ktp')
-                                        ->enableOpen()
+                                        ->directory('penghuni/ktp')                                      
                                         ->required()
                                         ->preserveFilenames() // <-- Menjaga nama file asli
                                         ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/jpg'])

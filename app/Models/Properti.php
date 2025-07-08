@@ -8,11 +8,13 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Facades\DB;
 
 
+
 class Properti extends Model
 {
     use HasFactory;
     protected $table = 'propertis';
     protected $fillable = [
+        'user_id',
         'nama_properti',
         'alamat_properti',
         'jenis',
