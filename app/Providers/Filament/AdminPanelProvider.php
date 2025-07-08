@@ -29,6 +29,7 @@ use Filament\Support\Assets\Js;
 use Filament\Support\Facades\FilamentAsset;
 use Illuminate\Auth\Middleware\EnsureEmailIsVerified;
 use Filament\Http\Responses\Auth\Contracts\LogoutResponse as LogoutResponseContract;
+use App\Models\User;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -93,5 +94,10 @@ class AdminPanelProvider extends PanelProvider
                 Authenticate::class,
             ]);
            
+    }
+
+     public function canAccessPanel(User $user): bool
+    {
+        return $user->role === 'pemilik';
     }
 }

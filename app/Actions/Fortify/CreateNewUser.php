@@ -25,6 +25,7 @@ class CreateNewUser implements CreatesNewUsers
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'password' => $this->passwordRules(),
             'terms' => Jetstream::hasTermsAndPrivacyPolicyFeature() ? ['accepted', 'required'] : '',
+            'role' => ['required', 'string', Rule::in(['pemilik', 'penyewa'])],
         ])->validate();
 
         // 1. Buat user dan simpan ke variabel $user
@@ -32,6 +33,7 @@ class CreateNewUser implements CreatesNewUsers
             'name' => $input['name'],
             'email' => $input['email'],
             'password' => Hash::make($input['password']),
+             'role' => $input['role'],
         ]);
 
         

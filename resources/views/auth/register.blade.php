@@ -29,6 +29,14 @@
                 <x-input id="password_confirmation" class="block mt-1 w-full" type="password" name="password_confirmation" required autocomplete="new-password" />
             </div>
 
+            <div class="mt-4">
+                <x-label for="role" value="{{ __('Peran') }}" />
+                <select id="role" name="role" class="block mt-1 w-full form-select">
+                    <option value="" disabled selected>{{ __('Pilih peran anda') }}</option>
+                    <option value="penyewa">{{ __('Penyewa') }}</option>
+                    <option value="pemilik">{{ __('Pemilik') }}</option>
+                </select>
+            </div>
 
             @if (Laravel\Jetstream\Jetstream::hasTermsAndPrivacyPolicyFeature())
                 <div class="mt-4">

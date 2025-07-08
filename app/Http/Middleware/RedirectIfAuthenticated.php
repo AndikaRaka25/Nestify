@@ -2,12 +2,12 @@
 
 namespace App\Http\Middleware;
 
-use App\Providers\RouteServiceProvider; // Anda mungkin perlu menyesuaikan ini jika tidak menggunakan RouteServiceProvider::HOME
+use App\Providers\RouteServiceProvider; 
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Symfony\Component\HttpFoundation\Response;
-use App\Models\User; // Pastikan Anda mengimpor model User jika diperlukan
+use App\Models\User; 
 
 
 class RedirectIfAuthenticated
@@ -19,15 +19,25 @@ class RedirectIfAuthenticated
      */
     public function handle(Request $request, Closure $next, string ...$guards): Response
     {
-        $guards = empty($guards) ? [null] : $guards;
+       $guards = empty($guards) ? [null] : $guards;
 
-    foreach ($guards as $guard) {
-        if (Auth::guard($guard)->check()) {
-            
-            return redirect('/');
+        foreach ($guards as $guard) {
+            if (Auth::guard($guard)->check()) {
+
+              
+                $user = Auth::user();
+                
+                // Tentukan URL redirect berdasarkan peran (role)
+                $redirectUrl = match ($user->role) {
+                    'pemilik' => $redirectUrl = '/admin',
+                    'penyewa' => $redirectUrl = '/user',
+                    default => $redirectUrl = '/'
+                };
+
+                return redirect($redirectUrl);
+            }
         }
-    }
 
-    return $next($request);
-}
+        return $next($request);
+    }
 }

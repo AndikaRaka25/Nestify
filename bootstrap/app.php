@@ -18,7 +18,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'auth' => \Illuminate\Auth\Middleware\Authenticate::class, // Updated to use the correct namespace
             'guest' => \App\Http\Middleware\RedirectIfAuthenticated::class, // <-- PASTIKAN BARIS INI ADA DAN BENAR
-            // ... alias lainnya mungkin ada di sini
+            
         ]);
 
         // Mungkin ada konfigurasi middleware lain di sini (global, group, dll.)

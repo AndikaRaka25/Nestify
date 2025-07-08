@@ -17,6 +17,7 @@ use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
+use App\Models\User;
 
 class UserPanelProvider extends PanelProvider
 {
@@ -52,5 +53,9 @@ class UserPanelProvider extends PanelProvider
             ->authMiddleware([
                 Authenticate::class,
             ]);
+    }
+     public function canAccessPanel(User $user): bool
+    {
+        return $user->role === 'penyewa';
     }
 }

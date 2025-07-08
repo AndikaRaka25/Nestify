@@ -33,8 +33,16 @@ Route::middleware([
     config('jetstream.auth_session'),
     'verified',
 ])->group(function () {
-    // Route::get('/admin/dashboard', function () {
-    //     return view('filament::dashboard');
-    // })->name('filament::dashboard');
+    Route::get('/dashboard', function () {
+        $user = \Illuminate\Support\Facades\Auth::user();
+        
+        return match ($user->role) {
+            'pemilik' => redirect('/admin'),
+            'penyewa' => redirect('/user'),
+            default   => redirect('/'), // Fallback jika peran tidak dikenali
+        };
+    })->name('dashboard');
 });
+
+
 

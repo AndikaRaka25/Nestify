@@ -1,7 +1,7 @@
 <?php
 
 namespace App\Http\Responses;
-
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\RedirectResponse;
 use Laravel\Fortify\Contracts\LoginResponse as LoginResponseContract;
 
@@ -15,7 +15,28 @@ class LoginResponse implements LoginResponseContract
      */
     public function toResponse($request)
     {
-        // Redirect to the intended URL or a default route
-        return new RedirectResponse(url('/admin')); // Ganti 'dashboard' dengan rute yang sesuai
+         $role = Auth::user()->role;
+
+        // Siapkan variabel untuk menyimpan tujuan redirect.
+        $redirectUrl = '';
+
+        // Terapkan logika pengalihan berdasarkan peran.
+        switch ($role) {
+            case 'pemilik':
+                // Jika peran adalah 'pemilik', arahkan ke panel admin.
+                $redirectUrl = '/admin';
+                break;
+            case 'penyewa':
+                // Jika peran adalah 'penyewa', arahkan ke panel user.
+                $redirectUrl = '/user';
+                break;
+            default:
+                // Sebagai fallback, jika peran tidak dikenali, arahkan ke halaman utama.
+                $redirectUrl = '/';
+                break;
+        }
+
+        // Lakukan redirect ke URL yang telah ditentukan.
+        return new RedirectResponse($redirectUrl);
     }
 }
