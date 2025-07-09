@@ -3,7 +3,6 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\TagihanResource\Pages;
-use App\Filament\Resources\TagihanResource\RelationManagers;
 use App\Models\Tagihan;
 use Filament\Forms;
 use Filament\Forms\Form;
@@ -11,151 +10,88 @@ use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
-use Tables\Columns\DateColumn;
+use Filament\Notifications\Notification;
+use Filament\Tables\Actions\Action;
 
 class TagihanResource extends Resource
 {
     protected static ?string $model = Tagihan::class;
-
     protected static ?int $navigationSort = 5;
-
     protected static ?string $navigationIcon = 'heroicon-o-banknotes';
-
-    public function getTabs(): array
-    {
-        return [
-            'Tagihan' => [
-                'label' => 'Tagihan',
-                'icon' => 'heroicon-o-document-text',
-            ],
-            'History' => [
-                'label' => 'History',
-                'icon' => 'heroicon-o-clock',
-            ],
-        ];
-    }
+    protected static ?string $label = 'Manajemen Tagihan';
 
     public static function form(Form $form): Form
     {
+        // Form hanya untuk melihat detail, jadi kita buat readonly
         return $form
             ->schema([
-                Forms\Components\Grid::make()
-                    ->schema([
-                        Forms\Components\Select::make('penghuni_id')
-                            ->relationship('penyewa', 'name')
-                            ->label('Penyewa')
-                            ->required(),
-                        Forms\Components\Select::make('tipe_kamar_id')
-                            ->relationship('tipeKamar', 'name')
-                            ->label('Tipe Kamar')
-                            ->required(),
-                        Forms\Components\Select::make('properti_id')
-                            ->relationship('properti', 'name')
-                            ->label('Properti')
-                            ->required(),
-                        Forms\Components\TextInput::make('periode_pembayaran')
-                            ->label('Periode Pembayaran')
-                            ->required(),
-                        Forms\Components\TextInput::make('jatuh_tempo')
-                            ->label('Jatuh Tempo')
-                            ->date()
-                            ->required(),
-                        Forms\Components\TextInput::make('total_tagihan')
-                            ->label('Total Tagihan')
-                            ->numeric()
-                            ->required(),
-                        Forms\Components\Select::make('status')
-                            ->options([
-                                'Belum Bayar' => 'Belum Bayar',
-                                'Butuh Konfirmasi' => 'Butuh Konfirmasi',
-                                'Lunas' => 'Lunas',
-                            ])
-                            ->label('Status Pembayaran'),
-                    ]),
-            ])->columns(2)
-            ->columns([
-                'sm' => 2,
-                'lg' => 2,
-                'xl' => 2,
+                Forms\Components\TextInput::make('penghuni.nama_penghuni')->label('Nama Penghuni')->disabled(),
+                Forms\Components\TextInput::make('properti.nama_properti')->label('Properti')->disabled(),
+                Forms\Components\TextInput::make('kamar.nama_kamar')->label('Kamar')->disabled(),
+                Forms\Components\TextInput::make('invoice_number')->label('Nomor Invoice')->disabled(),
+                Forms\Components\TextInput::make('periode')->label('Periode')->disabled(),
+                Forms\Components\TextInput::make('total_tagihan')->label('Total Tagihan')->money('IDR')->disabled(),
+                Forms\Components\DatePicker::make('jatuh_tempo')->label('Jatuh Tempo')->disabled(),
+                Forms\Components\Select::make('status')->options(['Belum Bayar' => 'Belum Bayar', 'Butuh Konfirmasi' => 'Butuh Konfirmasi', 'Lunas' => 'Lunas']),
+                Forms\Components\FileUpload::make('bukti_pembayaran')
+                    ->label('Bukti Pembayaran')
+                    ->image()
+                    ->disabled(),
             ]);
     }
 
     public static function table(Table $table): Table
     {
         return $table
-        ->columns([
-            // Mengambil nama penyewa melalui relasi
-            Tables\Columns\TextColumn::make('penghuni.name')
-                ->label('Nama Penyewa')
-                ->sortable(),
-            // Mengambil tipe kamar melalui relasi
-            Tables\Columns\TextColumn::make('tipe_kamar.name')
-                ->label('Tipe Kamar')
-                ->sortable(),
-            // Mengambil properti melalui relasi
-            Tables\Columns\TextColumn::make('nama_properti.name')
-                ->label('Properti')
-                ->sortable(),
-            // Periode pembayaran (misalnya: format "Bulan/Tahun" atau tanggal mulai-selesai)
-            Tables\Columns\TextColumn::make('periode_pembayaran')
-                ->label('Periode Pembayaran')
-                ->sortable(),
-            // Status pembayaran yang akan ditampilkan dengan badge berwarna
-            Tables\Columns\BadgeColumn::make('status')
-                ->label('Status Pembayaran')
-                ->colors([
-                    'warning' => 'Belum Bayar',
-                    'secondary' => 'Butuh Konfirmasi',
-                    'success' => 'Lunas',
-                ]),
-            // Jatuh tempo (ditampilkan sebagai tanggal)
-            Tables\Columns\TextColumn::make('jatuh_tempo')
-                ->label('Jatuh Tempo')
-                ->sortable(),
-            // Total tagihan (format mata uang)
-            Tables\Columns\TextColumn::make('total_tagihan')
-                ->label('Total Tagihan')
-                ->money('IDR', true)
-                ->sortable(),
-        ])
-        ->filters([
-            // Filter untuk menyaring data berdasarkan status
-            Tables\Filters\Filter::make('status')
-                ->form([
-                    Forms\Components\Select::make('status')
-                        ->label('Status Pembayaran')
-                        ->options([
-                            'Belum Bayar' => 'Belum Bayar',
-                            'Butuh Konfirmasi' => 'Butuh Konfirmasi',
-                            'Lunas' => 'Lunas',
-                        ])
-                ])
-                ->query(function ($query, array $data) {
-                    if ($data['status']) {
-                        $query->where('status', $data['status']);
-                    }
-                })
-                ->indicateUsing(fn (array $data): ?string => $data['status'] ? "Status: {$data['status']}" : null),
-        ]);
-}
-public static function getNavigationBadge(): ?string
-{
-    return static::getModel()::count();
-}
+            ->columns([
+                Tables\Columns\TextColumn::make('invoice_number')->label('Invoice')->searchable(),
+                Tables\Columns\TextColumn::make('penghuni.nama_penghuni')->label('Penghuni')->searchable(),
+                Tables\Columns\TextColumn::make('periode')->sortable(),
+                Tables\Columns\TextColumn::make('total_tagihan')->money('IDR')->sortable(),
+                Tables\Columns\BadgeColumn::make('status')
+                    ->colors([
+                        'warning' => 'Belum Bayar',
+                        'info' => 'Butuh Konfirmasi',
+                        'success' => 'Lunas',
+                    ]),
+                Tables\Columns\TextColumn::make('jatuh_tempo')->date()->sortable(),
+            ])
+            ->filters([
+                //
+            ])
+            ->actions([
+                Tables\Actions\EditAction::make()->label('Lihat/Ubah Status'),
+                Action::make('konfirmasi')
+                    ->label('Konfirmasi Lunas')
+                    ->icon('heroicon-s-check-circle')
+                    ->color('success')
+                    ->requiresConfirmation()
+                    // Hanya tampilkan tombol ini jika statusnya 'Butuh Konfirmasi'
+                    ->visible(fn (Tagihan $record): bool => $record->status === 'Butuh Konfirmasi')
+                    ->action(function (Tagihan $record) {
+                        $record->status = 'Lunas';
+                        $record->tanggal_bayar = now();
+                        $record->save();
+                        Notification::make()->title('Pembayaran dikonfirmasi!')->success()->send();
+                    }),
+            ])
+            ->bulkActions([
+                //
+            ]);
+    }
+    
     public static function getRelations(): array
     {
-        return [
-            //
-        ];
+        return [];
     }
-
+    
     public static function getPages(): array
     {
         return [
             'index' => Pages\ListTagihans::route('/'),
-            'create' => Pages\CreateTagihan::route('/create'),
-            'edit' => Pages\EditTagihan::route('/{record}/edit'),
+            // Kita sembunyikan halaman create dan edit karena manajemen dilakukan via tabel
+            // 'create' => Pages\CreateTagihan::route('/create'),
+            // 'edit' => Pages\EditTagihan::route('/{record}/edit'),
         ];
-    }
+    }    
 }

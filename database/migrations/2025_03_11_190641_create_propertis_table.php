@@ -17,9 +17,6 @@ return new class extends Migration
             $table->enum('jenis', ['putra', 'putri', 'campur']);
             $table->string('foto')->nullable();
             $table->string('alamat_properti');
-            $table->string('provinsi');
-            $table->string('kabupaten');
-            $table->string('kecamatan');
             $table->timestamps();
         });
     }

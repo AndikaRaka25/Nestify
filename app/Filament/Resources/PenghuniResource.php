@@ -2,215 +2,205 @@
 
 namespace App\Filament\Resources;
 
-use Filament\Forms;
-use Filament\Tables;
+use App\Filament\Resources\PenghuniResource\Pages;
+use App\Filament\Resources\PenghuniResource\RelationManagers;
 use App\Models\Kamar;
 use App\Models\Penghuni;
 use App\Models\Properti;
-use Filament\Forms\Form;
-use Filament\Forms\Get; 
-use Filament\Forms\Set; 
-use Filament\Tables\Table;
-use Filament\Resources\Resource;
+use Carbon\Carbon; 
+use Filament\Forms;
 use Filament\Forms\Components\Tabs;
-use Filament\Tables\Columns\Column;
-use Filament\Forms\Components\Select;
-use Filament\Tables\Columns\TextColumn;
-use Filament\Forms\Components\TextInput;
-use Filament\Notifications\Notification;
-use Filament\Forms\Components\DatePicker;
-use Filament\Forms\Components\FileUpload;
-use Filament\Tables\Columns\SelectColumn;
+use Filament\Forms\Form;
+use Filament\Forms\Get;
+use Filament\Forms\Set;
+use Filament\Resources\Resource;
+use Filament\Tables;
+use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Filament\Forms\Components\DateTimePicker;
-use App\Filament\Resources\PenghuniResource\Pages;
-use Filament\Support\RawJs;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
-use App\Filament\Resources\PenghuniResource\RelationManagers;
+use Filament\Tables\Actions\Action;
+use Filament\Notifications\Notification;
+use App\Models\Tagihan;
+use Illuminate\Support\Str;
 
 class PenghuniResource extends Resource
 {
     protected static ?string $model = Penghuni::class;
     protected static ?int $navigationSort = 3;
-
-    protected static ?string $navigationBadgeTooltip = 'Jumlah Penghuni';
-
-    protected static ?string $navigationIcon = 'heroicon-o-user';
+    protected static ?string $navigationIcon = 'heroicon-o-users';
+    protected static ?string $label = 'Data Penghuni';
+     protected static ?string $navigationBadgeTooltip = 'Jumlah Penghuni';
 
     public static function form(Form $form): Form
     {
         return $form->schema([
-            Forms\Components\Grid::make()
-                ->columns(3)
-                ->schema([
-                    // Kolom Kiri (Detail Penghuni)
-                    Forms\Components\Grid::make()
-                        ->columnSpan(2)
-                        ->columns(1)
-                        ->schema([
-                            Forms\Components\Section::make('Detail Penghuni')
-                                ->schema([
-                                    Tabs::make('TabsPenghuni')
-                                        ->tabs([
-                                            // Tab Biodata
-                                            Tabs\Tab::make('Biodata')
-                                                ->schema([
-                                                    // ... field biodata lainnya ...
-                                                    TextInput::make('nama_penghuni')->required(),
-                                                    TextInput::make('alamat_penghuni')->required(),
-                                                    TextInput::make('pekerjaan_penghuni')->required(),
-                                                    Select::make('jenis_kelamin_penghuni') // ... options
-                                                        ->required()
-                                                        ->options([
-                                                            'Laki-laki' => 'Laki-laki',
-                                                            'Perempuan' => 'Perempuan',
-                                                        ])
-                                                        ->placeholder('Pilih Jenis Kelamin'),
-    
-                                                ])->columns(1),// Atur layout kolom jika perlu
-    
-                                            // Tab Lokasi & Sewa (Gabung atau pisah sesuai selera)
-                                            Tabs\Tab::make('Lokasi & Sewa')
-                                                ->schema([
-                                                    // PILIH PROPERTI
-                                                    Select::make('properti_id')
-                                                        ->label('Properti')
-                                                        ->options(Properti::query()->pluck('nama_properti', 'id'))
-                                                        ->searchable()
-                                                        ->required()
-                                                        ->reactive() // <-- WAJIB: Agar field lain merespon perubahan ini
-                                                        ->afterStateUpdated(fn (Set $set) => $set('kamar_id', null)), // <-- Reset pilihan kamar jika properti berubah
-    
-                                                    // PILIH KAMAR (Bergantung pada Properti)
-                                                    Select::make('kamar_id')
-                                                        ->label('Kamar')
-                                                        ->options(function (Get $get) { // <-- Fungsi untuk load options dinamis
-                                                            $propertiId = $get('properti_id');
-                                                            if ($propertiId) {
-                                                                return Kamar::query()
-                                                                    ->where('properti_id', $propertiId)
-                                                                    ->pluck('nama_kamar', 'id');
-                                                            }
-                                                          
-                                                            return [];
-                                                        })
-                                                        ->searchable()
-                                                        ->required()
-                                                        ->reactive() // <-- WAJIB: Agar field lain merespon perubahan ini
-                                                        ->placeholder('Pilih Kamar')
-                                                        ->helperText('Pilih Kamar yang sesuai dengan Properti yang dipilih')
-                                                        ->disabled(fn (Get $get): bool => ! $get('properti_id'))
-                                                        ->live(), // <-- Bisa ditambahkan jika ingin interaksi lebih cepat
-    
-                                                   
-                                                    Select::make('status_penghuni') 
-                                                        ->required()
-                                                        ->options([
-                                                            'Pengajuan' => 'Pengajuan',
-                                                            'Aktif' => 'Aktif',
-                                                            'Tidak Aktif' => 'Tidak Aktif',
-                                                        ])
-                                                        ->default('Aktif')
-                                                        ->reactive(),
-                                                    TextInput::make('durasi_sewa'),
-                                                    TextInput::make('total_tagihan')
-                                                        ->label('Total Tagihan')
-                                                        ->numeric()
-                                                        ->prefix('Rp.') 
-                                                        ->placeholder('0'),
-                                                    DatePicker::make('mulai_sewa'),
-                                                    DatePicker::make('jatuh_tempo'),
-                                                ])
-                                                ->columns(1), 
-                                        ]),
+            Forms\Components\Grid::make()->columns(3)->schema([
+                // Kolom Kiri
+                Forms\Components\Grid::make()->columnSpan(2)->schema([
+                    Forms\Components\Section::make('Detail Penghuni')->schema([
+                        Tabs::make('TabsPenghuni')->tabs([
+                            Tabs\Tab::make('Biodata')->icon('heroicon-o-user-circle')->schema([
+                                Forms\Components\TextInput::make('nama_penghuni')->required()->maxLength(255),
+                                Forms\Components\TextInput::make('alamat_penghuni')->required()->maxLength(255),
+                                Forms\Components\TextInput::make('pekerjaan_penghuni')->required()->maxLength(255),
+                                Forms\Components\Select::make('jenis_kelamin_penghuni')->options(['Laki-laki' => 'Laki-laki', 'Perempuan' => 'Perempuan'])->required(),
+                            ])->columns(2),
+
+                            // Tab Lokasi & Sewa dengan LOGIKA BARU
+                            Tabs\Tab::make('Lokasi & Sewa')->icon('heroicon-o-map-pin')->schema([
+                                Forms\Components\Select::make('properti_id')
+                                    ->relationship('properti', 'nama_properti')->searchable()->preload()->required()->live()
+                                    ->afterStateUpdated(function (Set $set) {
+                                        $set('kamar_id', null);
+                                        $set('total_tagihan', null);
+                                        $set('jatuh_tempo', null);
+                                    }),
+
+                                Forms\Components\Select::make('kamar_id')
+                                    ->label('Kamar')
+                                    // PENYEMPURNAAN: Hanya menampilkan kamar yang kosong
+                                    ->options(fn (Get $get): array => Kamar::query()->where('properti_id', $get('properti_id'))->where('status_kamar', 'Kosong')->pluck('nama_kamar', 'id')->all())
+                                    ->searchable()->required()->live()
+                                    ->afterStateUpdated(fn (Get $get, Set $set) => self::hitungTagihanDanJatuhTempo($get, $set)),
+
+                                Forms\Components\Grid::make(2)->schema([
+                                    Forms\Components\TextInput::make('durasi_angka')
+                                        ->label('Durasi Sewa')
+                                        ->numeric()->required()->live(onBlur: true)
+                                        ->afterStateUpdated(fn (Get $get, Set $set) => self::hitungTagihanDanJatuhTempo($get, $set)),
+                                    Forms\Components\Select::make('durasi_unit')
+                                        ->label('Satuan')
+                                        ->options(['hari' => 'Hari', 'minggu' => 'Minggu', 'bulan' => 'Bulan', 'tahun' => 'Tahun'])
+                                        ->required()->live()
+                                        ->afterStateUpdated(fn (Get $get, Set $set) => self::hitungTagihanDanJatuhTempo($get, $set)),
                                 ]),
+                                
+                                Forms\Components\DatePicker::make('mulai_sewa')
+                                    ->required()->live(onBlur: true)
+                                    ->afterStateUpdated(fn (Get $get, Set $set) => self::hitungTagihanDanJatuhTempo($get, $set)),
+                                
+                                Forms\Components\TextInput::make('total_tagihan')
+                                    ->numeric()->prefix('Rp')->readOnly()->dehydrated(),
+
+                                Forms\Components\DatePicker::make('jatuh_tempo')
+                                    ->readOnly()->dehydrated(),
+
+                                Forms\Components\Select::make('status_penghuni')->options(['Pengajuan' => 'Pengajuan', 'Aktif' => 'Aktif', 'Tidak Aktif' => 'Tidak Aktif'])->default('Aktif')->required(),
+                            ])->columns(2),
                         ]),
-    
-                    // Kolom Kanan (Upload & Kontak)
-                    Forms\Components\Grid::make()
-                        ->columnSpan(1)
-                        ->columns(1)
-                        ->schema([
-                             Forms\Components\Section::make('Foto KTP')
-                                ->schema([
-                                    FileUpload::make('foto_ktp_penghuni') 
-                                        ->label('Upload Foto KTP')
-                                        ->image()
-                                        ->disk('public')
-                                        ->directory('penghuni/ktp')                                      
-                                        ->required()
-                                        ->preserveFilenames() // <-- Menjaga nama file asli
-                                        ->acceptedFileTypes(['image/jpeg', 'image/png', 'image/jpg'])
-                                ]),
-                            Forms\Components\Section::make('Kontak')
-                                ->schema([
-                                    TextInput::make('no_hp_penghuni')->required(),
-                                    TextInput::make('email_penghuni')->email()->required(),
-                                    TextInput::make('nama_kontak_darurat_penghuni')->required(),
-                                    TextInput::make('no_hp_kontak_darurat_penghuni')->required(),
-                                    TextInput::make('hubungan_kontak_darurat_penghuni')->required(),
-                                ]),
-                        ]),
+                    ]),
                 ]),
+
+                // Kolom Kanan
+                Forms\Components\Grid::make()->columnSpan(1)->schema([
+                    Forms\Components\Section::make('Dokumen & Kontak')->schema([
+                        Forms\Components\FileUpload::make('foto_ktp_penghuni')->label('Upload Foto KTP')->image()->disk('public')->directory('penghuni/ktp')->required(),
+                        Forms\Components\TextInput::make('no_hp_penghuni')->tel()->required(),
+                        Forms\Components\TextInput::make('email_penghuni')->email()->required(),
+                        Forms\Components\TextInput::make('nama_kontak_darurat_penghuni')->label('Nama Kontak Darurat')->required(),
+                        Forms\Components\TextInput::make('no_hp_kontak_darurat_penghuni')->label('No. HP Kontak Darurat')->tel()->required(),
+                    ]),
+                ]),
+            ]),
         ]);
     }
 
+    public static function hitungTagihanDanJatuhTempo(Get $get, Set $set): void
+    {
+        $kamarId = $get('kamar_id');
+        $durasiAngka = $get('durasi_angka');
+        $durasiUnit = $get('durasi_unit');
+        $mulaiSewa = $get('mulai_sewa');
+
+        if ($kamarId && $durasiAngka && $durasiUnit && $mulaiSewa) {
+            $kamar = Kamar::with('properti')->find($kamarId);
+            if (!$kamar || !$kamar->properti) {
+                return;
+            }
+
+            $hargaSewa = collect($kamar->properti->harga_sewa)
+                ->firstWhere('tipe', $kamar->tipe_kamar);
+
+            if (!$hargaSewa) {
+                $set('total_tagihan', 0);
+                $set('jatuh_tempo', null);
+                return;
+            }
+
+            $hargaSatuan = match ($durasiUnit) {
+                'hari' => $hargaSewa['harga_harian'] ?? 0,
+                'minggu' => $hargaSewa['harga_mingguan'] ?? 0,
+                'bulan' => $hargaSewa['harga_bulanan'] ?? 0,
+                'tahun' => $hargaSewa['harga_tahunan'] ?? 0,
+                default => 0,
+            };
+
+            $totalTagihan = (int)$hargaSatuan * (int)$durasiAngka;
+            $set('total_tagihan', $totalTagihan);
+
+            $tanggalMulai = Carbon::parse($mulaiSewa);
+            
+         
+            $jatuhTempo = match ($durasiUnit) {
+                'hari' => $tanggalMulai->addDays((int)$durasiAngka),
+                'minggu' => $tanggalMulai->addWeeks((int)$durasiAngka),
+                'bulan' => $tanggalMulai->addMonths((int)$durasiAngka),
+                'tahun' => $tanggalMulai->addYears((int)$durasiAngka),
+            };
+            $set('jatuh_tempo', $jatuhTempo->format('Y-m-d'));
+        }
+    }
+    
     public static function table(Table $table): Table
     {
         return $table
             ->columns([
-                TextColumn::make('nama_penghuni')
-                ->label('Nama Penghuni')
-                ->searchable()
-                ->sortable(),
-                TextColumn::make('properti.nama_properti')
-                ->label('Properti')
-                ->searchable()
-                ->sortable(),
-                TextColumn::make('kamar.nama_kamar')
-                ->label('Kamar')
-                ->searchable()
-                ->sortable(),
-                TextColumn::make('alamat_penghuni')
-                ->label('Alamat ')
-                ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('jenis_kelamin_penghuni')
-                ->label('Jenis Kelamin')
-                ->sortable()
-                ->toggleable(isToggledHiddenByDefault: true),
-                TextColumn::make('no_hp_penghuni')->label('Nomor Telepon'),
-                TextColumn::make('status_penghuni')
-                ->badge()
-                ->label('Status Penghuni')
-                ->sortable()
-                ->color(fn ($record): string => match ($record->status_penghuni ?? '') { 
-                    'Pengajuan' => 'warning',
-                    'Aktif' => 'success',
-                    'Tidak Aktif' => 'danger',
-                    default => 'gray', 
-                })
+                Tables\Columns\TextColumn::make('nama_penghuni')->searchable(),
+                Tables\Columns\TextColumn::make('properti.nama_properti')->searchable(),
+                Tables\Columns\TextColumn::make('kamar.nama_kamar')->searchable(),
+                Tables\Columns\TextColumn::make('status_penghuni')->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'Pengajuan' => 'warning',
+                        'Aktif' => 'success',
+                        'Tidak Aktif' => 'danger',
+                        default => 'gray',
+                    }),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('properti')
-                ->relationship('properti', 'nama_properti')
-                ->label('Filter Properti'),
+                Tables\Filters\SelectFilter::make('properti_id')
+                    ->relationship('properti', 'nama_properti')
+                    ->label('Filter Properti'),
             ])
             ->actions([
-                Tables\Actions\Action::make('view')
-                    ->label('Lihat')
-                    ->icon('heroicon-o-eye')
-                    ->color('gray')
-                    ->url(fn (Penghuni $record): string => static::getUrl('view', ['record' => $record])),
+                Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make()
+                Action::make('buatTagihan')
+                    ->label('Buat Tagihan')
+                    ->icon('heroicon-o-banknotes')
+                    ->color('info')
+                    ->requiresConfirmation()
+                    // Tombol ini hanya akan muncul jika penghuni belum punya tagihan
+                    ->visible(fn (Penghuni $record): bool => !$record->tagihan()->exists())
                     ->action(function (Penghuni $record) {
-                        $record->delete();
+                        // Logika yang sama persis dengan yang ada di model
+                        Tagihan::create([
+                            'penghuni_id' => $record->id,
+                            'properti_id' => $record->properti_id,
+                            'kamar_id' => $record->kamar_id,
+                            'invoice_number' => 'INV-' . now()->year . now()->month . '-' . Str::upper(Str::random(6)),
+                            'periode' => now()->format('F Y'),
+                            'total_tagihan' => $record->total_tagihan,
+                            'jatuh_tempo' => $record->jatuh_tempo,
+                            'status' => 'Belum Bayar',
+                        ]);
+
                         Notification::make()
-                            ->title('Data Penghuni Berhasil Dihapus')
+                            ->title('Tagihan berhasil dibuat!')
+                            ->body("Tagihan untuk {$record->nama_penghuni} telah berhasil dibuat.")
                             ->success()
                             ->send();
                     }),
-                    
+                Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -218,18 +208,16 @@ class PenghuniResource extends Resource
                 ]),
             ]);
     }
-
+ public static function getNavigationBadge(): ?string
+    {
+        return static::getModel()::count();
+        
+    }
     public static function getRelations(): array
     {
         return [
             //
         ];
-    }
-
-    
-    public static function getNavigationBadge(): ?string
-    {
-        return static::getModel()::count();
     }
 
     public static function getPages(): array

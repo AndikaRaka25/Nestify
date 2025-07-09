@@ -22,7 +22,6 @@ return new class extends Migration
             $table->string('foto_ktp_penghuni')->nullable();
             $table->string('nama_kontak_darurat_penghuni');
             $table->string('no_hp_kontak_darurat_penghuni');
-            $table->string('hubungan_kontak_darurat_penghuni');
             $table->enum('status_penghuni', ['Pengajuan', 'Aktif', 'Tidak Aktif'])->default('Aktif');
             $table->string('durasi_sewa')->nullable();
             $table->decimal('total_tagihan', 15, 2)->nullable();

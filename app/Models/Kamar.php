@@ -5,76 +5,37 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Facades\DB;
-use App\Models\Penghuni;
 
 class Kamar extends Model
 {
-    protected $table = 'kamars';
-    protected $fillable = ['nama_kamar', 'tipe_kamar', 'status_kamar', 'keterangan_kamar', 'properti_id'];
-
-
-    public function getStatusKamarAttribute($value)
-    {
-        return $this->attributes['keterangan_kamar'] === 'Terisi';
-    }
-   
+    use HasFactory;
     
-    public function setStatusKamarAttribute($value)
-    {
-        $isAktif = (bool) $value;
-        $this->attributes['status_kamar'] = $value ? 'Aktif' : 'Kosong';
-        $this->attributes['keterangan_kamar'] = $value ? 'Terisi' : 'Kosong';
-    }
-public function properti(): BelongsTo
+    protected $table = 'kamars';
+
+    // Kolom yang boleh diisi secara massal
+    protected $fillable = [
+        'nama_kamar', 
+        'tipe_kamar', 
+        'status_kamar', 
+        'keterangan_kamar', 
+        'properti_id'
+    ];
+
+    /**
+     * Relasi ke Properti: Satu kamar dimiliki oleh satu properti.
+     */
+    public function properti(): BelongsTo
     {
         return $this->belongsTo(Properti::class);
     }
-    public function penghuni(): \Illuminate\Database\Eloquent\Relations\HasOne
+
+    /**
+     * Relasi ke Penghuni: Satu kamar dihuni oleh satu penghuni.
+     */
+    public function penghuni(): HasOne
     {
          return $this->hasOne(Penghuni::class);
     }
-
-
-    protected static function boot()
-    {
-        parent::boot();
-
-        static::updated(function (Kamar $kamar) {
-            if ($kamar->wasChanged('keterangan_kamar') && $kamar->keterangan_kamar === 'Kosong') {
-                $penghuni = $kamar->penghuni;  
-                if ($penghuni) {
-                    $penghuni->status_penghuni = 'Tidak Aktif';
-                    $penghuni->save();
-                }
-            }
-
-             elseif ($kamar->wasChanged('keterangan_kamar') && $kamar->keterangan_kamar === 'Terisi') {
-               $penghuni = $kamar->penghuni;
-               if ($penghuni && $penghuni->status_penghuni !== 'Aktif') {
-                   
-                    $penghuni->status_penghuni = 'Aktif';
-                    $penghuni->save();
-               }
-             }
-        });
-
-        static::deleted(function (Kamar $kamar) { 
-            $penghuni = $kamar->penghuni;
-             if ($penghuni) {
-                 $penghuni->status_penghuni = 'Tidak Aktif';
-                 $penghuni->save();
-             }
-             self::resetKamarIds(); 
-        });
-    }
-
-    public static function resetKamarIds()
-    {
-        
-        DB::statement('SET @count = 0');
-        DB::statement('UPDATE kamars SET id = @count := @count + 1');
-        DB::statement('ALTER TABLE kamars AUTO_INCREMENT = 1');
-    }
-   
 }

@@ -63,7 +63,7 @@
   @include('layouts.partial.header') 
     
     {{-- Header dengan Overlay --}}
-    <header class="position-relative py-5" style="background-image: url('storage/landing_page/andika.JPG'); background-size: cover; background-position: center; color: white;">
+    <header class="position-relative py-5" style="background-image: url('storage/landing_page/foto_nestify_landingpage.JPG'); background-size: cover; background-position: center; color: white;">
       <div class="header-overlay"></div> {{-- Lapisan Overlay --}}
       <div class="container px-5 header-content"> {{-- Konten di atas overlay --}}
         <div class="row gx-5 justify-content-center">

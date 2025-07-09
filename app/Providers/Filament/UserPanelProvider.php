@@ -27,8 +27,12 @@ class UserPanelProvider extends PanelProvider
             ->id('user')
             ->path('user')
             ->colors([
-                'primary' => Color::Amber,
+                'primary' => Color::Blue,
             ])
+            ->brandName('Nestify') 
+            ->brandLogo(asset('storage/landing_page/logo_nestify.png')) 
+            ->brandLogoHeight('2rem') 
+            ->darkMode(false)
             ->discoverResources(in: app_path('Filament/User/Resources'), for: 'App\\Filament\\User\\Resources')
             ->discoverPages(in: app_path('Filament/User/Pages'), for: 'App\\Filament\\User\\Pages')
             ->pages([

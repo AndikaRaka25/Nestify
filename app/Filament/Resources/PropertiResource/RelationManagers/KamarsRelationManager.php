@@ -23,7 +23,12 @@ use App\Filament\Resources\PropertiResource\Pages;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Filament\Resources\RelationManagers\RelationManager;
 use App\Filament\Resources\PropertiResource\RelationManagers;
+use Filament\Forms\Get;
+use Filament\Forms\Set;
+use Illuminate\Validation\Rules\Unique;
 use Illuminate\Database\Eloquent\Model;
+use App\Models\Properti;
+
 
 
 class KamarsRelationManager extends RelationManager
@@ -40,21 +45,36 @@ class KamarsRelationManager extends RelationManager
             ->schema([
                 Forms\Components\Section::make('Silahkan isi data kamar')
                 ->schema([
-                    TextInput::make('nama_kamar')
-                        ->label('Nama Kamar')
-                        ->placeholder('Masukkan Nama Kamar')
-                        ->required()
-                        ->unique()
-                        ->columnSpan(2),
-                    Select::make('tipe_kamar')
-                        ->label('Tipe Kamar')
-                        ->placeholder('Pilih Tipe Kamar')
-                        ->options([
-                            'Tipe A' => 'Tipe A',
-                            'Tipe B' => 'Tipe B',
-                            'Tipe C' => 'Tipe C',
-                        ])
-                        ->required(),
+                     Forms\Components\Select::make('tipe_kamar')
+                    ->label('Tipe Kamar')
+                    ->placeholder('Pilih Tipe Kamar yang Tersedia')
+                    // Opsi akan di-load secara dinamis dari properti induk
+                    ->options(function (RelationManager $livewire): array {
+                        // Dapatkan data properti yang sedang dibuka
+                        $properti = $livewire->getOwnerRecord();
+
+                        if (!$properti || empty($properti->harga_sewa)) {
+                            return []; // Kembalikan array kosong jika properti tidak punya data harga sewa
+                        }
+
+                        // Ambil data 'tipe' dari array harga_sewa dan jadikan opsi
+                        return collect($properti->harga_sewa)
+                            ->pluck('tipe', 'tipe')
+                            ->all();
+                    })
+                    ->required(),
+
+                Forms\Components\TextInput::make('nama_kamar')
+                    ->label('Nama atau Nomor Kamar')
+                    ->placeholder('Contoh: Kamar 01, Kamar A-3')
+                    ->required()
+                    // Pastikan nama kamar unik untuk properti ini saja
+                    ->unique(
+                        ignoreRecord: true,
+                        modifyRuleUsing: function (Unique $rule, RelationManager $livewire) {
+                            return $rule->where('properti_id', $livewire->getOwnerRecord()->id);
+                        }
+                    ),
                     
                     Select::make('status_kamar')
                         ->label('Status Kamar')
@@ -62,6 +82,7 @@ class KamarsRelationManager extends RelationManager
                             'Aktif' => 'Aktif',
                             'Kosong' => 'Kosong',
                         ])
+                        ->helperText('Aktif berarti kamar sedang digunakan, Kosong berarti kamar tidak digunakan')
                         ->default('Kosong'),
                         
                 ]) ->columns(2) ->columnspan(2),

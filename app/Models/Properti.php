@@ -22,10 +22,16 @@ class Properti extends Model
         'provinsi',
         'kabupaten',
         'kecamatan',
+        'harga_sewa', 
+        'biaya_tambahan',
+        'info_pembayaran',
 
     ];
     protected $casts = [
         'foto' => 'array',
+        'harga_sewa' => 'array', 
+        'biaya_tambahan' => 'array', 
+        'info_pembayaran' => 'array', 
     ];
     public function kamars()
     {

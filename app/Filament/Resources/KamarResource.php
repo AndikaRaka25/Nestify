@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources;
 
+
 use Filament\Forms;
 use Filament\Tables;
 use App\Models\Kamar;
@@ -20,6 +21,7 @@ use Filament\Tables\Columns\BadgeColumn;
 use Filament\Tables\Columns\Layout\Panel;
 use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Filters\SelectFilter;
+use Filament\Tables\Columns\IconColumn;
 use Illuminate\Database\Eloquent\Builder;
 use App\Filament\Widgets\PropertiFilterWidget;
 use App\Filament\Resources\KamarResource\Pages;
@@ -28,6 +30,7 @@ use App\Filament\Resources\KamarResource\RelationManagers;
 use App\Filament\Resources\KamarResource\Widgets\PropertiFilter;
 use Filament\Tables\Columns\SelectColumn;
 use Filament\Forms\Get;
+use Filament\Forms\Set;
 use Illuminate\Validation\Rules\Unique;
 use Illuminate\Database\Eloquent\Model;
 
@@ -54,7 +57,9 @@ class KamarResource extends Resource
                     ->relationship('properti', 'nama_properti')
                     ->placeholder('Pilih Properti Anda')
                     ->required()
-                    ->reactive(),
+                    ->reactive()
+                    ->live() 
+                            ->afterStateUpdated(fn (Set $set) => $set('tipe_kamar', null)),
                     TextInput::make('nama_kamar')
                         ->label('Nama Kamar')
                         ->placeholder('Masukkan Nama Kamar')
@@ -75,12 +80,25 @@ class KamarResource extends Resource
                     Select::make('tipe_kamar')
                         ->label('Tipe Kamar')
                         ->placeholder('Pilih Tipe Kamar')
-                        ->options([
-                            'Tipe A' => 'Tipe A',
-                            'Tipe B' => 'Tipe B',
-                            'Tipe C' => 'Tipe C',
-                        ])
-                        ->required(),
+                        ->options(function (Get $get) {
+                                $propertiId = $get('properti_id');
+                                if (!$propertiId) {
+                                    return []; // Kembalikan array kosong jika properti belum dipilih
+                                }
+
+                                $properti = Properti::find($propertiId);
+                                if (!$properti || empty($properti->harga_sewa)) {
+                                    return []; // Kembalikan array kosong jika properti tidak punya data harga sewa
+                                }
+
+                                // Ambil data 'tipe' dari array harga_sewa dan jadikan opsi
+                                $tipeOptions = collect($properti->harga_sewa)->pluck('tipe', 'tipe');
+                                
+                                return $tipeOptions;
+                            })
+                        ->required()
+                        ->live()
+                            ->disabled(fn (Get $get): bool => !$get('properti_id')),
                     
                     Select::make('status_kamar')
                         ->label('Status Kamar')
@@ -110,24 +128,22 @@ class KamarResource extends Resource
                     ->label('Nama Kamar')
                     ->searchable()
                     ->sortable(),
-                    ToggleColumn::make('status_kamar')
-                    ->label('Status')
-                    ->onIcon('heroicon-o-check-circle')
-                    ->offIcon('heroicon-o-x-circle')
-                    ->onColor('success')
-                    ->offColor('danger'),
-                    Tables\Columns\BadgeColumn::make('keterangan_kamar')
-                    ->label('Keterangan Kamar')
-                    ->color(fn (string $state): string => match ($state) {
-                        'Terisi' => 'success',
-                        'Kosong' => 'danger',
+                    Tables\Columns\TextColumn::make('penghuni.nama_penghuni')
+                    ->label('Dihuni oleh')
+                    ->placeholder('--- KOSONG ---')
+                    ->searchable(),
+
+                // --- KOLOM STATUS YANG LEBIH JELAS ---
+                Tables\Columns\BadgeColumn::make('status_kamar')
+                    ->label('Status Kamar')
+                    ->formatStateUsing(fn (string $state): string => ucfirst($state)) // Membuatnya jadi "Aktif" atau "Kosong"
+                    ->color(fn (string $state): string => match (strtolower($state)) {
+                        'aktif' => 'success', // 'Aktif' berarti kamar terisi
+                        'kosong' => 'danger', // 'Kosong' berarti kamar tidak terisi
                         default => 'gray',
-                    })
-                    ->sortable(),
+                    }),
                 
             ])
-           
-
             ->filters([
                 SelectFilter::make('properti_id')
                     ->relationship('properti', 'nama_properti')
@@ -156,7 +172,7 @@ class KamarResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            RelationManagers\PenghuniRelationManager::class,
         ];
     }
 
