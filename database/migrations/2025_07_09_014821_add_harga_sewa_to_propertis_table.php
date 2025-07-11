@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::table('propertis', function (Blueprint $table) {
             // Kolom untuk menyimpan harga sewa per tipe dalam format JSON
-            $table->json('harga_sewa')->nullable()->after('kecamatan');
+            $table->json('harga_sewa')->nullable();
         });
     }
 

@@ -12,10 +12,7 @@ class TagihanChart extends ChartWidget
 {
     protected static ?string $heading = 'Grafik Pendapatan Lunas (12 Bulan Terakhir)';
     protected static ?string $maxHeight = '300px';
-
-    // --- PERUBAHAN DI SINI ---
-    // Mengatur agar widget ini memakan 2 kolom dari total 3 kolom grid
-    protected int | string | array $columnSpan = 1;
+    protected int | string | array $columnSpan = 1; // Mengatur lebar widget
 
     public ?string $filter = 'all';
 

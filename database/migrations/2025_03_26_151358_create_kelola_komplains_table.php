@@ -6,23 +6,24 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('kelola_komplains', function (Blueprint $table) {
             $table->id();
+            // Kunci asing untuk relasi
+            $table->foreignId('penghuni_id')->constrained('penghunis')->onDelete('cascade');
+            $table->foreignId('properti_id')->constrained('propertis')->onDelete('cascade');
+            $table->foreignId('kamar_id')->constrained('kamars')->onDelete('cascade');
+
+            // Detail Komplain
             $table->string('judul');
             $table->text('deskripsi');
+            $table->string('lampiran')->nullable(); // Untuk menyimpan path gambar
             $table->enum('status', ['pending', 'proses', 'selesai'])->default('pending');
             $table->timestamps();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('kelola_komplains');

@@ -9,7 +9,6 @@ use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
-use Illuminate\Database\Eloquent\Builder;
 use Filament\Notifications\Notification;
 use Filament\Tables\Actions\Action;
 
@@ -22,22 +21,46 @@ class TagihanResource extends Resource
 
     public static function form(Form $form): Form
     {
-        // Form hanya untuk melihat detail, jadi kita buat readonly
         return $form
             ->schema([
-                Forms\Components\TextInput::make('penghuni.nama_penghuni')->label('Nama Penghuni')->disabled(),
-                Forms\Components\TextInput::make('properti.nama_properti')->label('Properti')->disabled(),
-                Forms\Components\TextInput::make('kamar.nama_kamar')->label('Kamar')->disabled(),
-                Forms\Components\TextInput::make('invoice_number')->label('Nomor Invoice')->disabled(),
-                Forms\Components\TextInput::make('periode')->label('Periode')->disabled(),
-                Forms\Components\TextInput::make('total_tagihan')->label('Total Tagihan')->money('IDR')->disabled(),
+                // --- PERBAIKAN DI SINI: Menggunakan Placeholder ---
+                Forms\Components\Placeholder::make('nama_penghuni')
+                    ->label('Nama Penghuni')
+                    ->content(fn (?Tagihan $record): string => $record?->penghuni?->nama_penghuni ?? '-'),
+
+                Forms\Components\Placeholder::make('nama_properti')
+                    ->label('Properti')
+                    ->content(fn (?Tagihan $record): string => $record?->properti?->nama_properti ?? '-'),
+
+                Forms\Components\Placeholder::make('nama_kamar')
+                    ->label('Kamar')
+                    ->content(fn (?Tagihan $record): string => $record?->kamar?->nama_kamar ?? '-'),
+                
+                // Kolom lain yang tidak perlu diedit juga lebih baik menggunakan Placeholder
+                Forms\Components\Placeholder::make('invoice_number')
+                    ->label('Nomor Invoice')
+                    ->content(fn (?Tagihan $record): string => $record?->invoice_number ?? '-'),
+                
+                Forms\Components\Placeholder::make('periode')
+                    ->label('Periode')
+                    ->content(fn (?Tagihan $record): string => $record?->periode ?? '-'),
+
+                Forms\Components\TextInput::make('total_tagihan')
+                    ->label('Total Tagihan')
+                    ->numeric()
+                    ->prefix('Rp')
+                    ->disabled(), // Dibiarkan sebagai TextInput karena mungkin perlu diedit
+
                 Forms\Components\DatePicker::make('jatuh_tempo')->label('Jatuh Tempo')->disabled(),
+                
+                // Kolom yang bisa diubah
                 Forms\Components\Select::make('status')->options(['Belum Bayar' => 'Belum Bayar', 'Butuh Konfirmasi' => 'Butuh Konfirmasi', 'Lunas' => 'Lunas']),
+                
                 Forms\Components\FileUpload::make('bukti_pembayaran')
                     ->label('Bukti Pembayaran')
                     ->image()
                     ->disabled(),
-            ]);
+            ])->columns(2); // Mengatur layout form menjadi 2 kolom
     }
 
     public static function table(Table $table): Table
@@ -48,17 +71,14 @@ class TagihanResource extends Resource
                 Tables\Columns\TextColumn::make('penghuni.nama_penghuni')->label('Penghuni')->searchable(),
                 Tables\Columns\TextColumn::make('periode')->sortable(),
                 Tables\Columns\TextColumn::make('total_tagihan')->money('IDR')->sortable(),
-                Tables\Columns\BadgeColumn::make('status')
-                    ->colors([
-                        'warning' => 'Belum Bayar',
-                        'info' => 'Butuh Konfirmasi',
-                        'success' => 'Lunas',
-                    ]),
+                Tables\Columns\TextColumn::make('status')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'Belum Bayar' => 'warning', 'Butuh Konfirmasi' => 'info', 'Lunas' => 'success', default => 'gray',
+                    }),
                 Tables\Columns\TextColumn::make('jatuh_tempo')->date()->sortable(),
             ])
-            ->filters([
-                //
-            ])
+            ->filters([])
             ->actions([
                 Tables\Actions\EditAction::make()->label('Lihat/Ubah Status'),
                 Action::make('konfirmasi')
@@ -66,7 +86,6 @@ class TagihanResource extends Resource
                     ->icon('heroicon-s-check-circle')
                     ->color('success')
                     ->requiresConfirmation()
-                    // Hanya tampilkan tombol ini jika statusnya 'Butuh Konfirmasi'
                     ->visible(fn (Tagihan $record): bool => $record->status === 'Butuh Konfirmasi')
                     ->action(function (Tagihan $record) {
                         $record->status = 'Lunas';
@@ -75,9 +94,7 @@ class TagihanResource extends Resource
                         Notification::make()->title('Pembayaran dikonfirmasi!')->success()->send();
                     }),
             ])
-            ->bulkActions([
-                //
-            ]);
+            ->bulkActions([]);
     }
     
     public static function getRelations(): array
@@ -89,9 +106,6 @@ class TagihanResource extends Resource
     {
         return [
             'index' => Pages\ListTagihans::route('/'),
-            // Kita sembunyikan halaman create dan edit karena manajemen dilakukan via tabel
-            // 'create' => Pages\CreateTagihan::route('/create'),
-            // 'edit' => Pages\EditTagihan::route('/{record}/edit'),
         ];
     }    
 }

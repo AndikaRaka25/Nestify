@@ -7,7 +7,7 @@ use Filament\Widgets\ChartWidget;
 
 class TotalTagihanChart extends ChartWidget
 {
-    protected static ?string $heading = 'Total Tagihan';
+    protected static ?string $heading = 'Total Keuangan';
     protected static ?string $maxHeight = '300px';
 
     // Mengatur agar widget ini hanya memakan 1 kolom dari total 3 kolom grid
