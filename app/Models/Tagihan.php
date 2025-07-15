@@ -27,7 +27,8 @@ class Tagihan extends Model
         'status',
         'bukti_pembayaran',
         'tanggal_bayar',
-        'applied_discount',
+        'applied_discount_code', // KODE promo yang diterapkan
+        'applied_discount_details', // Detail diskon yang diterapkan
     ];
 
     /**
@@ -37,7 +38,8 @@ class Tagihan extends Model
     protected $casts = [
         'jatuh_tempo' => 'date',
         'tanggal_bayar' => 'datetime',
-        'applied_discount' => 'array', // Pastikan ini di-cast sebagai array
+        'applied_discount_code' => 'string', // Pastikan ini di-cast sebagai string
+        'applied_discount_details' => 'array', // Pastikan ini di-cast sebagai array
     ];
 
     public function penghuni(): BelongsTo

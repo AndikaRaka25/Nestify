@@ -3,6 +3,7 @@
 namespace App\Filament\User\Resources\KosSayaResource\Pages;
 
 use App\Filament\User\Resources\KosSayaResource;
+use App\Filament\User\Widgets\PropertiCardWidget;
 use App\Models\Kamar;
 use App\Models\Penghuni;
 use App\Models\Properti;
@@ -24,6 +25,11 @@ use Illuminate\Support\Facades\Auth;
 use Filament\Forms\Get;
 use Filament\Forms\Set;
 use Illuminate\Support\Carbon;
+use Filament\Tables\Actions\ViewAction; 
+use Filament\Tables\Columns\ImageColumn;
+use Filament\Forms\Components\Placeholder;
+use Filament\Forms\Components\repeater;
+
 
 class BrowseProperti extends Page implements HasTable
 {
@@ -32,23 +38,98 @@ class BrowseProperti extends Page implements HasTable
     protected static string $resource = KosSayaResource::class;
     protected static string $view = 'filament.user.resources.kos-saya-resource.pages.browse-properti';
     protected static ?string $title = 'Cari & Daftar Kos';
+    
 
     public function table(Table $table): Table
     {
         return $table
             ->query(Properti::query()->whereHas('kamars', fn ($query) => $query->where('status_kamar', 'Kosong')))
             ->columns([
+                 ImageColumn::make('foto.0') // Ambil foto pertama dari array
+                    ->label('Foto')
+                    ->disk('public')
+                    ->width(100)
+                    ->height(100)
+                    ->circular(), 
                 TextColumn::make('nama_properti')->label('Nama Properti')->searchable(),
                 TextColumn::make('alamat_properti')->label('Alamat')->limit(50)->html(),
                 TextColumn::make('jenis')->label('Jenis Kos')->badge(),
                 TextColumn::make('user.name')->label('Pemilik'),
             ])
             ->actions([
+
+              ViewAction::make()
+                    ->label('Lihat Detail')
+                    ->icon('heroicon-o-eye')
+                    ->modalHeading(fn (Properti $record) => 'Detail: ' . $record->nama_properti)
+                    ->modalSubmitAction(false) // Tidak ada tombol "Simpan"
+                    ->modalCancelActionLabel('Tutup')
+                    ->modalWidth('4xl') // Buat modal lebih lebar
+                    ->form(function (Properti $record): array {
+                        // Membangun tampilan detail yang kaya di dalam form
+                        return [
+                            Section::make('Galeri Foto')
+                                ->schema([
+                                    FileUpload::make('foto')
+                                        ->label('')
+                                        ->multiple()
+                                        ->disk('public')
+                                        ->disabled() // Mode read-only
+                                        ->hiddenLabel()
+                                        ->default($record->foto),
+                                ])->collapsible(),
+
+                            Section::make('Informasi Utama')
+                                ->schema([
+                                    Grid::make(2)->schema([
+                                        Placeholder::make('nama_properti_ph')
+                                            ->label('Nama Properti')
+                                            ->content($record->nama_properti),
+                                        Placeholder::make('jenis_ph')
+                                            ->label('Jenis Kos')
+                                            ->content(ucfirst($record->jenis)),
+                                    ]),
+                                    Placeholder::make('alamat_properti_ph')
+                                        ->label('Alamat Lengkap')
+                                        ->content(new \Illuminate\Support\HtmlString($record->alamat_properti)),
+                                ]),
+
+                            Grid::make(2)->schema([
+                                Section::make('Harga Sewa')
+                                    ->schema([
+                                        Repeater::make('harga_sewa')
+                                            ->label('')
+                                            ->schema([
+                                                TextInput::make('tipe')->readOnly(),
+                                                TextInput::make('harga_harian')->numeric()->prefix('Rp')->readOnly(),
+                                                TextInput::make('harga_mingguan')->numeric()->prefix('Rp')->readOnly(),
+                                                TextInput::make('harga_bulanan')->numeric()->prefix('Rp')->readOnly(),
+                                                TextInput::make('harga_tahunan')->numeric()->prefix('Rp')->readOnly(),
+                                            ])
+                                            ->columns(2)->disabled()->addable(false)->deletable(false)
+                                            ->default($record->harga_sewa),
+                                    ]),
+                                Section::make('Biaya Tambahan')
+                                    ->schema([
+                                        Repeater::make('biaya_tambahan')
+                                            ->label('')
+                                            ->schema([
+                                                TextInput::make('nama_biaya')->readOnly(),
+                                                TextInput::make('total_biaya')->numeric()->prefix('Rp')->readOnly(),
+                                            ])
+                                            ->columns(2)->disabled()->addable(false)->deletable(false)
+                                            ->default($record->biaya_tambahan),
+                                    ]),
+                            ]),
+                        ];
+                    }),
+                    
                 \Filament\Tables\Actions\Action::make('Daftar di Kos Ini')
                     ->icon('heroicon-o-pencil-square')
                     ->form(fn (Properti $record): array => $this->getRegistrationFormSchema($record))
                     ->action(fn (array $data, Properti $record) => $this->createPengajuan($data, $record))
                     ->modalWidth('4xl'),
+                
             ]);
     }
 
@@ -89,11 +170,19 @@ class BrowseProperti extends Page implements HasTable
                                     $durasiAngka = $get('durasi_angka');
                                     $mulaiSewa = $get('mulai_sewa');
                                     $kamarId = $get('kamar_id');
+                                    
                                     if (empty($durasiAngka) || empty($state) || empty($mulaiSewa) || empty($kamarId)) {
-                                        $set('total_tagihan', 0); return;
+                                        $set('total_tagihan', 0);
+                                        return;
                                     }
+
                                     $kamar = Kamar::find($kamarId);
-                                    if (!$kamar) { $set('total_tagihan', 0); return; }
+                                    if (!$kamar) {
+                                        $set('total_tagihan', 0);
+                                        return;
+                                    }
+
+                                    // --- Menghitung Harga Sewa ---
                                     $tipeKamar = $kamar->tipe_kamar;
                                     $hargaSewaData = $properti->harga_sewa ?? [];
                                     $hargaUnit = 0;
@@ -102,11 +191,26 @@ class BrowseProperti extends Page implements HasTable
                                     };
                                     foreach ($hargaSewaData as $harga) {
                                         if (isset($harga['tipe']) && $harga['tipe'] === $tipeKamar && isset($harga[$hargaKey])) {
-                                            $hargaUnit = $harga[$hargaKey]; break;
+                                            $hargaUnit = $harga[$hargaKey];
+                                            break;
                                         }
                                     }
-                                    $totalTagihan = (float)$hargaUnit * (int)$durasiAngka;
-                                    $set('total_tagihan', $totalTagihan);
+                                    $totalHargaSewa = (float)$hargaUnit * (int)$durasiAngka;
+
+                                    // --- Menghitung Biaya Tambahan ---
+                                    $biayaTambahanData = $properti->biaya_tambahan ?? [];
+                                    $totalBiayaTambahan = 0;
+                                    if (is_array($biayaTambahanData)) {
+                                        foreach ($biayaTambahanData as $biaya) {
+                                            $totalBiayaTambahan += (float)($biaya['total_biaya'] ?? 0);
+                                        }
+                                    }
+
+                                    // --- Kalkulasi Total Tagihan Akhir ---
+                                    $totalTagihanAkhir = $totalHargaSewa + $totalBiayaTambahan;
+                                    $set('total_tagihan', $totalTagihanAkhir);
+                                    
+                                    // --- Menghitung Jatuh Tempo ---
                                     $jatuhTempo = Carbon::parse($mulaiSewa)->{'add'.ucfirst($state).'s'}((int)$durasiAngka)->subDay()->format('Y-m-d');
                                     $set('jatuh_tempo', $jatuhTempo);
                                 }),
@@ -172,4 +276,5 @@ class BrowseProperti extends Page implements HasTable
         // Arahkan pengguna ke halaman "Kos Saya" setelah berhasil
         redirect()->to(KosSayaResource::getUrl('index'));
     }
+
 }

@@ -3,11 +3,11 @@
 namespace App\Filament\Resources\PenghuniResource\Pages;
 
 use App\Filament\Resources\PenghuniResource;
-use App\Models\Tagihan; // ✅ 1. Import model Tagihan
+use App\Models\Tagihan;
 use Filament\Actions;
 use Filament\Resources\Pages\EditRecord;
-use Filament\Notifications\Notification; // ✅ 2. Import Notifikasi
-use Illuminate\Database\Eloquent\Model; // ✅ 3. Import Model
+use Filament\Notifications\Notification;
+use Illuminate\Database\Eloquent\Model;
 
 class EditPenghuni extends EditRecord
 {
@@ -21,29 +21,40 @@ class EditPenghuni extends EditRecord
         ];
     }
 
-    /**
-     * ✅ --- INI ADALAH LOGIKA BARU ANDA --- ✅
-     * Metode ini akan berjalan secara otomatis SETELAH data penghuni berhasil disimpan.
-     *
-     * @param  array  $data Data yang baru saja disimpan.
-     * @return void
-     */
+    
     protected function afterSave(): void
     {
-        // Dapatkan data penghuni yang baru saja di-update
         $penghuni = $this->getRecord();
 
-        // Cari tagihan terakhir yang belum lunas milik penghuni ini
+       
+        $totalTagihanAwal = (float) $penghuni->total_tagihan;
+
+        $penghuni->load('properti');
+        $biayaTambahan = $penghuni->properti->biaya_tambahan ?? [];
+
+        
+        $totalBiayaTambahan = 0;
+        if (is_array($biayaTambahan)) {
+            foreach ($biayaTambahan as $biaya) {
+                $totalBiayaTambahan += (float) ($biaya['total_biaya'] ?? 0);
+            }
+        }
+
+      
+        $totalTagihanAkhir = $totalTagihanAwal + $totalBiayaTambahan;
+
+        
         $lastUnpaidBill = Tagihan::where('penghuni_id', $penghuni->id)
                                  ->where('status', 'Belum Bayar')
                                  ->latest('created_at')
                                  ->first();
 
-        // Jika ada tagihan yang belum lunas, kita update saja tagihan tersebut
+        
         if ($lastUnpaidBill) {
+            
             $lastUnpaidBill->update([
                 'periode' => 'Pembaruan - ' . $penghuni->durasi_sewa,
-                'total_tagihan' => $penghuni->total_tagihan,
+                'total_tagihan' => $totalTagihanAkhir, 
                 'jatuh_tempo' => $penghuni->jatuh_tempo,
             ]);
 
@@ -53,21 +64,21 @@ class EditPenghuni extends EditRecord
                 ->success()
                 ->send();
         } else {
-            // Jika semua tagihan sebelumnya sudah lunas, buat tagihan baru
+            
             Tagihan::create([
                 'penghuni_id' => $penghuni->id,
                 'properti_id' => $penghuni->properti_id,
                 'kamar_id' => $penghuni->kamar_id,
                 'invoice_number' => 'INV/' . now()->year . '/' . uniqid(),
                 'periode' => 'Tagihan Baru - ' . $penghuni->durasi_sewa,
-                'total_tagihan' => $penghuni->total_tagihan,
+                'total_tagihan' => $totalTagihanAkhir, 
                 'jatuh_tempo' => $penghuni->jatuh_tempo,
                 'status' => 'Belum Bayar',
             ]);
 
              Notification::make()
                 ->title('Tagihan Baru Berhasil Dibuat!')
-                ->body('Tagihan baru telah dibuat untuk penghuni ini sesuai durasi sewa yang baru.')
+                ->body('Tagihan baru telah dibuat sesuai durasi sewa yang baru.')
                 ->success()
                 ->send();
         }

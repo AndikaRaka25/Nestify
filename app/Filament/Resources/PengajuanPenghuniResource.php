@@ -18,13 +18,17 @@ use Filament\Forms\Components\FileUpload;
 use Filament\Tables\Actions\Action;
 use Filament\Tables\Actions\ViewAction;
 use Filament\Notifications\Notification;
+use App\Models\Kamar;
+use Filament\Forms\Components\Select;
+use Carbon\Carbon;
+use Illuminate\Support\Str;
 
 class PengajuanPenghuniResource extends Resource
 {
     protected static ?string $model = Penghuni::class;
     protected static ?string $navigationIcon = 'heroicon-o-inbox-arrow-down';
-    protected static ?string $label = 'Pengajuan';
-    protected static ?string $pluralLabel = 'Pengajuan';
+    protected static ?string $label = 'Pengajuan Penghuni';
+    protected static ?string $pluralLabel = 'Pengajuan Penghuni';
     protected static ?int $navigationSort = 4;
 
     public static function getEloquentQuery(): Builder
@@ -77,24 +81,90 @@ class PengajuanPenghuniResource extends Resource
             ->actions([
                 // ✅ --- SEMUA TOMBOL AKSI SEKARANG DIDEFINISIKAN DI SINI --- ✅
                 Action::make('konfirmasi_masuk')
-                    ->label('Konfirmasi Masuk')
-                    ->icon('heroicon-o-check-circle')->color('success')->requiresConfirmation()
-                    ->visible(fn (Penghuni $record): bool => $record->status_penghuni === 'Pengajuan')
-                    ->action(function (Penghuni $record) {
-                        $record->update(['status_penghuni' => 'Aktif']);
-                        Tagihan::create([
-                            'penghuni_id' => $record->id,
-                            'properti_id' => $record->properti_id,
-                            'kamar_id' => $record->kamar_id,
-                            'invoice_number' => 'INV/' . now()->year . '/' . uniqid(),
-                            'periode' => 'Tagihan Pertama - ' . $record->durasi_sewa,
-                            'total_tagihan' => $record->total_tagihan,
-                            'jatuh_tempo' => $record->jatuh_tempo,
-                            'status' => 'Belum Bayar',
-                        ]);
-                        if ($record->kamar) $record->kamar->update(['status_kamar' => 'Aktif']);
-                        Notification::make()->title('Penghuni Dikonfirmasi!')->success()->send();
-                    }),
+                ->label('Konfirmasi Masuk')
+                ->icon('heroicon-o-check-circle')->color('success')
+                ->visible(fn (Penghuni $record): bool => $record->status_penghuni === 'Pengajuan')
+                ->form([
+                    // Form ini HANYA akan muncul jika kamar_id pada data pengajuan masih kosong
+                    Select::make('kamar_id')
+                        ->label('Pilih Kamar Untuk Ditempati')
+                        ->options(function (Penghuni $record) {
+                            // Ambil kamar yang statusnya 'Kosong' di properti yang sama
+                            return Kamar::where('properti_id', $record->properti_id)
+                                        ->where('status_kamar', 'Kosong')
+                                        ->pluck('nama_kamar', 'id');
+                        })
+                        ->required()
+                        ->searchable()
+                        ->placeholder('Pilih kamar yang tersedia')
+                        ->helperText('Pilih kamar yang akan ditempati oleh penyewa ini.')
+                        // Hanya tampilkan field ini jika kamar_id di record kosong
+                        ->visible(fn (Penghuni $record) => is_null($record->kamar_id)),
+                ])
+                ->requiresConfirmation()
+                ->action(function (Penghuni $record, array $data) {
+                    // Ambil kamar_id, utamakan dari form. Jika tidak ada, ambil dari record asli.
+                    $kamarIdTerpilih = $data['kamar_id'] ?? $record->kamar_id;
+
+                    // Validasi akhir untuk memastikan kamar_id tidak kosong
+                    if (!$kamarIdTerpilih) {
+                        Notification::make()->title('Aksi Gagal!')->body('Kamar untuk penyewa belum ditentukan.')->danger()->send();
+                        return;
+                    }
+                    $totalTagihanAwal = (float) $record->total_tagihan;
+
+                        // Langkah 2: Ambil semua biaya tambahan dari properti terkait
+                        $biayaTambahan = $record->properti->biaya_tambahan ?? [];
+
+                        // Langkah 3: Hitung total dari semua biaya tambahan
+                        $totalBiayaTambahan = 0;
+                        if (is_array($biayaTambahan)) {
+                            foreach ($biayaTambahan as $biaya) {
+                                $totalBiayaTambahan += (float) ($biaya['total_biaya'] ?? 0);
+                            }
+                        }
+
+                        // Langkah 4: Kalkulasi total tagihan akhir
+                        $totalTagihanAkhir = $totalTagihanAwal + $totalBiayaTambahan;
+
+                    // Update data penyewa dengan status dan kamar_id yang valid
+                    $record->update([
+                        'status_penghuni' => 'Aktif',
+                        'kamar_id' => $kamarIdTerpilih
+                    ]);
+
+                    // Update status kamar menjadi terisi
+                    Kamar::find($kamarIdTerpilih)->update(['status_kamar' => 'Aktif']);
+                   $parts = explode(' ', $record->durasi_sewa);
+                        $durasiAngka = (int) ($parts[0] ?? 1);
+                        $durasiUnitText = $parts[1] ?? 'Bulan';
+                        $durasiUnit = strtolower(Str::of($durasiUnitText)->singular());
+                        
+                        $tanggalMulai = Carbon::parse($record->mulai_sewa);
+
+                        // ✅ PERBAIKAN UTAMA: Perhitungan jatuh tempo yang akurat
+                        $jatuhTempoPertama = $tanggalMulai->copy(); // Salin tanggal mulai
+                        match ($durasiUnit) {
+                            'hari'   => $jatuhTempoPertama->addDays(1),
+                            'minggu'  => $jatuhTempoPertama->addWeeks(1),
+                            'bulan' => $jatuhTempoPertama->addMonths(1),
+                            'tahun'  => $jatuhTempoPertama->addYears(1),
+                        };
+
+                    // Buat tagihan pertama dengan data yang sudah valid
+                    Tagihan::create([
+                        'penghuni_id' => $record->id,
+                        'properti_id' => $record->properti_id,
+                        'kamar_id' => $kamarIdTerpilih,
+                        'invoice_number' => 'INV/' . now()->year . '/' . uniqid(),
+                         'periode' => 'Tagihan ke-1 dari ' . $durasiAngka . ' ' . ucfirst($durasiUnit),
+                        'total_tagihan' => $totalTagihanAkhir,
+                        'jatuh_tempo' => $jatuhTempoPertama,
+                        'status' => 'Belum Bayar',
+                    ]);
+                    
+                    Notification::make()->title('Penghuni Dikonfirmasi!')->body('Penyewa telah diaktifkan dan tagihan pertama dibuat.')->success()->send();
+                }),
                 
                Action::make('konfirmasi_berhenti')
                 ->label('Konfirmasi Berhenti')
@@ -105,16 +175,13 @@ class PengajuanPenghuniResource extends Resource
                 ->modalDescription('Apakah Anda yakin? Riwayat penghuni akan dipertahankan, tetapi mereka akan dikeluarkan dari kamar.')
                 ->visible(fn (Penghuni $record): bool => $record->status_penghuni === 'Pengajuan Berhenti')
                 ->action(function (Penghuni $record) {
-                    // 1. Simpan relasi kamar sebelum diubah
                     $kamar = $record->kamar;
 
-                    // 2. Update status & putuskan hubungan dengan kamar
                     $record->update([
                         'status_penghuni' => 'Tidak Aktif',
                         'kamar_id' => null, // Ini adalah kunci untuk mencegah duplikasi di masa depan
                     ]);
                     
-                    // 3. Update status kamar menjadi 'Kosong'
                     if ($kamar) {
                         $kamar->update(['status_kamar' => 'Kosong']);
                     }

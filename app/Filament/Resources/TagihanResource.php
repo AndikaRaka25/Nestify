@@ -12,6 +12,8 @@ use Filament\Tables\Table;
 use Filament\Notifications\Notification;
 use Filament\Tables\Actions\Action;
 use Filament\Tables\Filters\SelectFilter;
+use App\Models\Properti;
+
 
 class TagihanResource extends Resource
 {
@@ -42,25 +44,31 @@ class TagihanResource extends Resource
                     ->label('Nomor Invoice')
                     ->content(fn (?Tagihan $record): string => $record?->invoice_number ?? '-'),
                 
-                Forms\Components\Placeholder::make('diskon')
+                Forms\Components\Placeholder::make('diskon_digunakan')
                     ->label('Diskon yang Digunakan')
-                    // 🛑 Logika ->visible() DIHAPUS dari sini
                     ->content(function (?Tagihan $record): string {
-                        // Cek jika ada data diskon yang tersimpan di dalam record tagihan
-                        if ($discount = $record?->applied_discount) {
-                            $nilai = $discount['nilai_diskon'];
-                            $jenis = $discount['jenis_diskon'];
-                            
-                            // Format tampilan berdasarkan jenis diskon
-                            $formattedValue = $jenis === 'persen' ? "{$nilai}%" : 'Rp ' . number_format($nilai, 0, ',', '.');
-                            
-                            // Kembalikan detail diskon
-                            return "{$discount['kode_promo']} ({$formattedValue})";
+                        // 1. Cek apakah ada data diskon yang tersimpan di kolom JSON
+                        $discountDetails = $record?->applied_discount_details;
+
+                        if ($discountDetails) {
+                            // 2. Ambil detail dari data JSON yang sudah di-decode otomatis oleh Laravel
+                            $kodePromo = $discountDetails['kode_promo'] ?? 'N/A';
+                            $nilai = $discountDetails['nilai_diskon'] ?? 0;
+                            $jenis = $discountDetails['jenis_diskon'] ?? 'nominal';
+
+                            // 3. Format nilai diskon agar mudah dibaca
+                            $formattedValue = $jenis === 'persen'
+                                ? "{$nilai}%"
+                                : 'Rp ' . number_format($nilai, 0, ',', '.');
+
+                            // 4. Kembalikan string yang informatif
+                            return "{$kodePromo} ({$formattedValue})";
                         }
                         
-                        // Jika tidak ada diskon yang digunakan, tampilkan strip
+                        // 5. Jika tidak ada diskon yang digunakan, tampilkan strip
                         return '-';
-                    }),
+                    })
+                    ->visible(fn (?Tagihan $record): bool => !empty($record?->applied_discount_details)),
                 
                 Forms\Components\Placeholder::make('periode')
                     ->label('Periode')

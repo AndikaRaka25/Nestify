@@ -24,6 +24,8 @@ use Filament\Notifications\Notification;
 use Filament\Tables\Actions\Action;
 use Filament\Tables\Columns\BadgeColumn;
 use Illuminate\Support\Carbon;
+use Filament\Actions\Action as ModalAction;
+use Filament\Tables\Columns\ImageColumn;
 
 class KosSayaResource extends Resource
 {
@@ -73,6 +75,12 @@ class KosSayaResource extends Resource
     {
         return $table
             ->columns([
+                ImageColumn::make('foto.0') // Ambil foto pertama dari array
+                    ->label('Foto')
+                    ->disk('public')
+                    ->width(100)
+                    ->height(100)
+                    ->circular(), 
                 Tables\Columns\TextColumn::make('nama_properti')->label('Nama Properti'),
                 Tables\Columns\TextColumn::make('alamat_properti')->label('Alamat')->limit(50)->html(),
                 

@@ -4,88 +4,89 @@ namespace App\Filament\User\Resources;
 
 use App\Filament\User\Resources\KomplainSayaResource\Pages;
 use App\Models\KelolaKomplain;
-use App\Models\Penghuni; // Kita butuh ini untuk mencari data penghuni
+use App\Models\Penghuni; // Pastikan model ini di-import
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Support\Facades\Auth; // Untuk mendapatkan user yang login
+use Illuminate\Support\Facades\Auth; // Pastikan Auth di-import
+use Filament\Notifications\Notification;
 
 class KomplainSayaResource extends Resource
 {
     protected static ?string $model = KelolaKomplain::class;
-
-    // Mengatur tampilan di menu navigasi penyewa
-    protected static ?string $navigationIcon = 'heroicon-o-chat-bubble-left-ellipsis';
-    protected static ?string $label = 'Komplain Saya';
-        protected static ?int $navigationSort = 3;
-    protected static ?string $pluralLabel = 'Komplain Saya';
+    protected static ?string $navigationIcon = 'heroicon-o-chat-bubble-bottom-center-text';
+    protected static ?string $navigationLabel = 'Komplain Saya';
+    protected static ?string $modelLabel = 'Komplain';
+    protected static ?int $navigationSort = 3;
 
     public static function form(Form $form): Form
     {
-        // Form ini hanya akan muncul saat penyewa menekan tombol "Buat Komplain Baru"
         return $form
             ->schema([
-                // ✅ Menggunakan TextInput biasa, karena data akan disuntikkan dari halaman View
-                Forms\Components\TextInput::make('nama_pelapor')
+                 Forms\Components\TextInput::make('nama_pelapor')
                     ->label('Nama Pelapor')
                     ->default(Auth::user()->name) // Tetap berfungsi saat membuat komplain baru
-                    ->disabled(), // Selalu disabled
-                
-                Forms\Components\TextInput::make('judul')
-                    ->label('Judul Komplain')
-                    ->required()
-                    ->maxLength(255)
-                    ->disabled(fn (string $operation): bool => $operation !== 'create'),
-                
-                Forms\Components\Textarea::make('deskripsi')
-                    ->label('Deskripsi Lengkap Komplain')
-                    ->required()
-                    ->columnSpanFull()
-                    ->disabled(fn (string $operation): bool => $operation !== 'create'),
-                
+                    ->disabled(), 
+                Forms\Components\TextInput::make('judul')->required()->maxLength(255),
+                Forms\Components\Textarea::make('deskripsi')->required()->columnSpanFull(),
                 Forms\Components\FileUpload::make('lampiran')
-                    ->label('Foto Lampiran')
-                    ->multiple()
-                    ->reorderable()
-                    ->image()
-                    ->disk('public')
-                    ->directory('komplain-attachments')
-                    ->disabled(fn (string $operation): bool => $operation !== 'create'),
+                    ->multiple()->disk('public')->directory('komplain-attachments')->image(),
             ]);
     }
 
     public static function table(Table $table): Table
     {
-        // Tabel ini akan menampilkan daftar komplain yang pernah dibuat penyewa
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('judul')->searchable(),
+                Tables\Columns\TextColumn::make('status')->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'pending' => 'warning',
+                        'proses' => 'primary',
+                        'selesai' => 'success',
+                    }),
                 Tables\Columns\TextColumn::make('created_at')->label('Tanggal Diajukan')->dateTime()->sortable(),
-                Tables\Columns\BadgeColumn::make('status')
-                    ->colors([
-                        'warning' => 'pending',
-                        'primary' => 'proses',
-                        'success' => 'selesai',
-                    ])
-                    ->formatStateUsing(fn (string $state): string => ucfirst($state)),
             ])
-            ->filters([
-                // Filter tidak diperlukan di sini karena sudah ada Tabs
-            ])
-            ->actions([
-                Tables\Actions\ViewAction::make(), // Penyewa hanya bisa melihat detail
-            ])
-            ->bulkActions([]);
+            ->actions([Tables\Actions\ViewAction::make()]);
     }
 
-    public static function getRelations(): array
+    // ==============================================================
+    // ✨ INILAH PERBAIKAN UTAMA DAN PALING PENTING ✨
+    // ==============================================================
+     protected static function mutateFormDataBeforeCreate(array $data): array
     {
-        return [
-            //
-        ];
+        // Langkah 1: Dapatkan email dari pengguna yang sedang login.
+        // Ini adalah satu-satunya penghubung yang valid.
+        $userEmail = Auth::user()->email;
+
+        // Langkah 2: Cari data sewa (penghuni) yang statusnya "Aktif"
+        // menggunakan email tersebut.
+        $penghuniAktif = Penghuni::where('email_penghuni', $userEmail)
+                                ->where('status_penghuni', 'Aktif')
+                                ->first();
+
+        // Langkah 3: Pastikan data penghuni aktif ditemukan. Jika ya,
+        // ambil semua ID yang diperlukan dari sana.
+        if ($penghuniAktif) {
+            $data['penghuni_id'] = $penghuniAktif->id;
+            $data['properti_id'] = $penghuniAktif->properti_id;
+            $data['kamar_id'] = $penghuniAktif->kamar_id; // kamar_id PASTI terisi
+        }
+
+        // Langkah 4: Atur status awal komplain menjadi 'pending'.
+        $data['status'] = 'pending';
+
+        return $data;
+    }
+
+    public static function getEloquentQuery(): Builder
+    {
+        $userEmail = Auth::user()->email;
+        $penghuniIds = Penghuni::where('email_penghuni', $userEmail)->pluck('id')->toArray();
+        return parent::getEloquentQuery()->whereIn('penghuni_id', $penghuniIds);
     }
 
     public static function getPages(): array
@@ -95,23 +96,5 @@ class KomplainSayaResource extends Resource
             'create' => Pages\CreateKomplainSaya::route('/create'),
             'view' => Pages\ViewKomplainSaya::route('/{record}'),
         ];
-    }
-
-    /**
-     * !! BAGIAN PALING PENTING UNTUK KEAMANAN !!
-     * Memastikan penyewa hanya bisa melihat komplain miliknya sendiri.
-     */
-    public static function getEloquentQuery(): Builder
-    {
-        // 1. Cari data penghuni berdasarkan user yang sedang login
-        $penghuni = Penghuni::where('email_penghuni', Auth::user()->email)->first();
-
-        // 2. Jika user ini bukan penghuni, jangan tampilkan komplain apa pun
-        if (!$penghuni) {
-            return parent::getEloquentQuery()->whereNull('id');
-        }
-
-        // 3. Tampilkan komplain yang penghuni_id-nya cocok
-        return parent::getEloquentQuery()->where('penghuni_id', $penghuni->id);
     }
 }

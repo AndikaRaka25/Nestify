@@ -80,6 +80,7 @@ class PenghuniResource extends Resource
                                     ->afterStateUpdated(fn (Get $get, Set $set) => self::hitungTagihanDanJatuhTempo($get, $set)),
                                 
                                 Forms\Components\TextInput::make('total_tagihan')
+                                ->label('Total Tagihan (Termasuk Biaya Tambahan)')
                                     ->numeric()->prefix('Rp')->readOnly()->dehydrated(),
 
                                 Forms\Components\DatePicker::make('jatuh_tempo')
@@ -112,43 +113,54 @@ class PenghuniResource extends Resource
         $durasiUnit = $get('durasi_unit');
         $mulaiSewa = $get('mulai_sewa');
 
-        if ($kamarId && $durasiAngka && $durasiUnit && $mulaiSewa) {
-            $kamar = Kamar::with('properti')->find($kamarId);
-            if (!$kamar || !$kamar->properti) {
-                return;
-            }
-
-            $hargaSewa = collect($kamar->properti->harga_sewa)
-                ->firstWhere('tipe', $kamar->tipe_kamar);
-
-            if (!$hargaSewa) {
-                $set('total_tagihan', 0);
-                $set('jatuh_tempo', null);
-                return;
-            }
-
-            $hargaSatuan = match ($durasiUnit) {
-                'hari' => $hargaSewa['harga_harian'] ?? 0,
-                'minggu' => $hargaSewa['harga_mingguan'] ?? 0,
-                'bulan' => $hargaSewa['harga_bulanan'] ?? 0,
-                'tahun' => $hargaSewa['harga_tahunan'] ?? 0,
-                default => 0,
-            };
-
-            $totalTagihan = (int)$hargaSatuan * (int)$durasiAngka;
-            $set('total_tagihan', $totalTagihan);
-
-            $tanggalMulai = Carbon::parse($mulaiSewa);
-            
-         
-            $jatuhTempo = match ($durasiUnit) {
-                'hari' => $tanggalMulai->addDays((int)$durasiAngka),
-                'minggu' => $tanggalMulai->addWeeks((int)$durasiAngka),
-                'bulan' => $tanggalMulai->addMonths((int)$durasiAngka),
-                'tahun' => $tanggalMulai->addYears((int)$durasiAngka),
-            };
-            $set('jatuh_tempo', $jatuhTempo->format('Y-m-d'));
+        if (!$kamarId || !$durasiAngka || !$durasiUnit || !$mulaiSewa) {
+            $set('total_tagihan', 0);
+            return;
         }
+
+        $kamar = Kamar::with('properti')->find($kamarId);
+        if (!$kamar || !$kamar->properti) {
+            $set('total_tagihan', 0);
+            return;
+        }
+
+        // --- Menghitung Harga Sewa (Logika ini sudah benar) ---
+        $hargaSewaData = $kamar->properti->harga_sewa ?? [];
+        $hargaUnit = 0;
+        $hargaKey = match ($durasiUnit) {
+            'hari' => 'harga_harian', 'minggu' => 'harga_mingguan', 'bulan' => 'harga_bulanan', 'tahun' => 'harga_tahunan', default => ''
+        };
+
+        foreach ($hargaSewaData as $harga) {
+            if (($harga['tipe'] ?? null) === $kamar->tipe_kamar && isset($harga[$hargaKey])) {
+                $hargaUnit = $harga[$hargaKey];
+                break;
+            }
+        }
+        $totalHargaSewa = (float)$hargaUnit * (int)$durasiAngka;
+
+        // --- Menghitung Biaya Tambahan (Logika BARU ditambahkan di sini) ---
+        $biayaTambahanData = $kamar->properti->biaya_tambahan ?? [];
+        $totalBiayaTambahan = 0;
+        if (is_array($biayaTambahanData)) {
+            foreach ($biayaTambahanData as $biaya) {
+                $totalBiayaTambahan += (float)($biaya['total_biaya'] ?? 0);
+            }
+        }
+
+        // --- Kalkulasi Total Tagihan Akhir ---
+        $totalTagihanAkhir = $totalHargaSewa + $totalBiayaTambahan;
+        $set('total_tagihan', $totalTagihanAkhir);
+
+        // --- Menghitung Jatuh Tempo (Logika ini sudah benar) ---
+        $tanggalMulai = Carbon::parse($mulaiSewa);
+        $jatuhTempo = match ($durasiUnit) {
+            'hari' => $tanggalMulai->addDays((int)$durasiAngka),
+            'minggu' => $tanggalMulai->addWeeks((int)$durasiAngka),
+            'bulan' => $tanggalMulai->addMonths((int)$durasiAngka),
+            'tahun' => $tanggalMulai->addYears((int)$durasiAngka),
+        };
+        $set('jatuh_tempo', $jatuhTempo->subDay()->format('Y-m-d'));
     }
     
     public static function table(Table $table): Table

@@ -16,19 +16,27 @@ class CreateKomplainSaya extends CreateRecord
      * ✅ Method ini adalah "mesin" otomatisnya.
      * Sebelum data dari form disimpan, kita akan menyuntikkan data penting.
      */
-    protected function mutateFormDataBeforeCreate(array $data): array
-    {
-        // 1. Cari data lengkap penghuni yang sedang login
-        $penghuni = Penghuni::where('email_penghuni', Auth::user()->email)->first();
+   protected function mutateFormDataBeforeCreate(array $data): array
+{
+        // Langkah 1: Dapatkan email dari pengguna yang sedang login.
+        // Ini adalah satu-satunya penghubung yang valid.
+        $userEmail = Auth::user()->email;
 
-        // 2. Jika data penghuni ditemukan, suntikkan ID-nya ke dalam data form
-        if ($penghuni) {
-            $data['penghuni_id'] = $penghuni->id;
-            $data['properti_id'] = $penghuni->properti_id;
-            $data['kamar_id'] = $penghuni->kamar_id;
+        // Langkah 2: Cari data sewa (penghuni) yang statusnya "Aktif"
+        // menggunakan email tersebut.
+        $penghuniAktif = Penghuni::where('email_penghuni', $userEmail)
+                                ->where('status_penghuni', 'Aktif')
+                                ->first();
+
+        // Langkah 3: Pastikan data penghuni aktif ditemukan. Jika ya,
+        // ambil semua ID yang diperlukan dari sana.
+        if ($penghuniAktif) {
+            $data['penghuni_id'] = $penghuniAktif->id;
+            $data['properti_id'] = $penghuniAktif->properti_id;
+            $data['kamar_id'] = $penghuniAktif->kamar_id; // kamar_id PASTI terisi
         }
 
-        // 3. Atur status awal komplain menjadi 'pending'
+        // Langkah 4: Atur status awal komplain menjadi 'pending'.
         $data['status'] = 'pending';
 
         return $data;

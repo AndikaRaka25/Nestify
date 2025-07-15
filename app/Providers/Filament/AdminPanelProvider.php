@@ -31,6 +31,8 @@ use Filament\Support\Facades\FilamentAsset;
 use Illuminate\Auth\Middleware\EnsureEmailIsVerified;
 use Filament\Http\Responses\Auth\Contracts\LogoutResponse as LogoutResponseContract;
 use App\Models\User;
+use App\Filament\Pages\HelpCenter;
+
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -63,6 +65,10 @@ class AdminPanelProvider extends PanelProvider
                     ->label('Settings')
                     ->url(fn (): string => Settings::getUrl())
                     ->icon('heroicon-o-cog-6-tooth'),
+                MenuItem::make()
+                ->label('Bantuan & Dukungan')
+                ->url(fn (): string => HelpCenter::getUrl())
+                ->icon('heroicon-o-question-mark-circle'),
             ])
             ->brandName('Nestify') 
             ->brandLogo(asset('storage/landing_page/logo_nestify.png')) 
@@ -72,6 +78,8 @@ class AdminPanelProvider extends PanelProvider
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->pages([
                 Pages\Dashboard::class,
+                Settings::class,
+                HelpCenter::class,
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->spa()

@@ -1,21 +1,25 @@
 <x-action-section>
     <x-slot name="title">
-        {{ __('Delete Account') }}
+        {{ __('Hapus Akun') }}
     </x-slot>
 
     <x-slot name="description">
-        {{ __('Permanently delete your account.') }}
+        {{ __('Pastikan Anda telah mencadangkan semua data yang ingin disimpan sebelum menghapus akun Anda.') }}
     </x-slot>
 
     <x-slot name="content">
         <div class="max-w-xl text-sm text-gray-600">
-            {{ __('Once your account is deleted, all of its resources and data will be permanently deleted. Before deleting your account, please download any data or information that you wish to retain.') }}
+            {{ __('Akun Anda akan dihapus secara permanen. Sebelum menghapus akun Anda, harap unduh data atau informasi yang ingin Anda simpan.') }}
         </div>
 
         <div class="mt-5">
-            <x-danger-button wire:click="confirmUserDeletion" wire:loading.attr="disabled">
-                {{ __('Delete Account') }}
-            </x-danger-button>
+            <x-filament::button color="danger" wire:click="confirmUserDeletion" wire:loading.attr="disabled">
+                {{ __('Hapus Akun') }}
+            </x-filament::button>
+
+            <x-action-message class="ms-3" on="userDeleted">
+                {{ __('Akun Anda telah dihapus.') }}
+            </x-action-message>
         </div>
 
         <!-- Delete User Confirmation Modal -->
@@ -40,14 +44,16 @@
             </x-slot>
 
             <x-slot name="footer">
-                <x-secondary-button wire:click="$toggle('confirmingUserDeletion')" wire:loading.attr="disabled">
-                    {{ __('Cancel') }}
-                </x-secondary-button>
+                    {{-- ✨ PERBAIKAN: Menggunakan Tombol Filament (Secondary) ✨ --}}
+                    <x-filament::button color="gray" wire:click="$toggle('confirmingUserDeletion')" wire:loading.attr="disabled">
+                        {{ __('Batal') }}
+                    </x-filament::button>
 
-                <x-danger-button class="ms-3" wire:click="deleteUser" wire:loading.attr="disabled">
-                    {{ __('Delete Account') }}
-                </x-danger-button>
-            </x-slot>
+                    {{-- ✨ PERBAIKAN: Menggunakan Tombol Filament (Danger) ✨ --}}
+                    <x-filament::button color="danger" class="ms-3" wire:click="deleteUser" wire:loading.attr="disabled">
+                        {{ __('Hapus Akun') }}
+                    </x-filament::button>
+                </x-slot>
         </x-dialog-modal>
     </x-slot>
 </x-action-section>

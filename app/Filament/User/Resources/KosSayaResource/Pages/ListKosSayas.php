@@ -27,6 +27,7 @@ class ListKosSayas extends ListRecords
         ];
     }
     
+    
     /**
      * ✅ Mengirim data status penghuni secara eksplisit ke view.
      */

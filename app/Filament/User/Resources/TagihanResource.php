@@ -60,26 +60,20 @@ class TagihanResource extends Resource
                                 ->label('Periode Tagihan')
                                 ->content(fn ($record) => $record->periode),
 
-                            Forms\Components\Placeholder::make('diskon')
+                            Forms\Components\Placeholder::make('diskon_digunakan')
                                 ->label('Diskon yang Digunakan')
-                                ->content(function ($record) {
-                                    // Cek jika ada data diskon yang tersimpan di dalam record tagihan
-                                    if ($discount = $record->applied_discount) {
-                                        $nilai = $discount['nilai_diskon'];
-                                        $jenis = $discount['jenis_diskon'];
-                                        
-                                        // Format tampilan berdasarkan jenis diskon
+                                ->content(function (?Tagihan $record): string {
+                                    $discountDetails = $record?->applied_discount_details;
+                                    if ($discountDetails) {
+                                        $kodePromo = $discountDetails['kode_promo'] ?? 'N/A';
+                                        $nilai = $discountDetails['nilai_diskon'] ?? 0;
+                                        $jenis = $discountDetails['jenis_diskon'] ?? 'nominal';
                                         $formattedValue = $jenis === 'persen' ? "{$nilai}%" : 'Rp ' . number_format($nilai, 0, ',', '.');
-                                        
-                                        // Kembalikan detail diskon
-                                        return "{$discount['kode_promo']} ({$formattedValue})";
+                                        return "{$kodePromo} ({$formattedValue})";
                                     }
-                                    
-                                    // Jika tidak ada diskon yang digunakan, tampilkan strip
                                     return '-';
-                                }),   
-                    
-                        
+                                })
+                                ->visible(fn (?Tagihan $record): bool => !empty($record?->applied_discount_details)),
 
                             Forms\Components\Placeholder::make('jatuh_tempo')
                                 ->label('Jatuh Tempo')
@@ -208,11 +202,12 @@ class TagihanResource extends Resource
                         ];
                     })
                     // ✅ --- PERBAIKAN UTAMA DI SINI --- ✅
-                    ->action(function (Tagihan $record, array $data) {
-                        // 1. Hitung ulang total akhir berdasarkan promo yang dipilih
+                   ->action(function (Tagihan $record, array $data) {
                         $totalAkhir = $record->total_tagihan;
                         $promoIndex = $data['promo_pilihan'];
                         $discounts = $record->properti?->discounts ?? [];
+                        $appliedPromoCode = null;
+                        $appliedPromoDetails = null;
 
                         if ($promoIndex !== null && $promoIndex !== '' && isset($discounts[$promoIndex])) {
                             $promo = $discounts[$promoIndex];
@@ -223,6 +218,8 @@ class TagihanResource extends Resource
                             } else {
                                 $totalAkhir -= $nilaiDiskon;
                             }
+                            $appliedPromoCode = $promo['kode_promo'];
+                            $appliedPromoDetails = $promo;
                         }
 
                         // 2. Simpan semua data yang benar ke database
@@ -231,6 +228,8 @@ class TagihanResource extends Resource
                             'total_tagihan' => max(0, $totalAkhir), // Simpan total tagihan yang baru
                             'status' => 'Butuh Konfirmasi',
                             'tanggal_bayar' => now(),
+                            'applied_discount_code' => $appliedPromoCode, // <-- BARIS BARU
+                            'applied_discount_details' => $appliedPromoDetails,
                         ]);
                         
                         Notification::make()
