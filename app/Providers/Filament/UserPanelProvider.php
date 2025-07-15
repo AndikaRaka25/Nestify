@@ -27,6 +27,9 @@ use App\Filament\User\Pages\SettingsUser;
 use Filament\Navigation\MenuItem;
 use App\Filament\User\Pages\HelpCenterUser;
 use App\Filament\User\Pages\PenyewaDashboard;
+use App\Filament\User\Widgets\InfoKosWidget;
+use App\Filament\User\Widgets\TagihanAktifWidget;
+use App\Filament\User\Widgets\KomplainAktifWidget;
 
 
 class UserPanelProvider extends PanelProvider
@@ -56,7 +59,6 @@ class UserPanelProvider extends PanelProvider
             ->darkMode(false)
             ->discoverResources(in: app_path('Filament/User/Resources'), for: 'App\\Filament\\User\\Resources')
             ->discoverPages(in: app_path('Filament/User/PagesUser'), for: 'App\\Filament\\User\\PagesUser')
-            ->dashboard(PenyewaDashboard::class)
             ->pages([
                 Pages\Dashboard::class,
                 SettingsUser::class,
@@ -69,7 +71,9 @@ class UserPanelProvider extends PanelProvider
             ->sidebarCollapsibleOnDesktop()
             ->widgets([
                 Widgets\AccountWidget::class,
-              
+              InfoKosWidget::class,
+            TagihanAktifWidget::class,
+            KomplainAktifWidget::class,
             ])
             ->middleware([
                 EncryptCookies::class,
