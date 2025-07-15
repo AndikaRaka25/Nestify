@@ -208,11 +208,11 @@ class PenghuniResource extends Resource
                 ]),
             ]);
     }
- public static function getNavigationBadge(): ?string
+  public static function getNavigationBadge(): ?string
     {
-        return static::getModel()::count();
-        
+        return static::getModel()::where('status_penghuni', 'Aktif')->count();
     }
+
     public static function getRelations(): array
     {
         return [

@@ -6,6 +6,7 @@ use App\Filament\Resources\KelolaKomplainResource;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\DB; // ✅ 1. Import DB Facade
 
 class ListKelolaKomplains extends ListRecords
 {
@@ -15,9 +16,9 @@ class ListKelolaKomplains extends ListRecords
     {
         return [
             // Tombol create dinonaktifkan karena komplain dibuat oleh penyewa
-            // Actions\CreateAction::make(),
         ];
     }
+
 
     public function getTabs(): array
     {
@@ -25,10 +26,12 @@ class ListKelolaKomplains extends ListRecords
             'semua' => ListRecords\Tab::make('Semua'),
             'aktif' => ListRecords\Tab::make('Aktif')
                 ->modifyQueryUsing(fn (Builder $query) => $query->whereIn('status', ['pending', 'proses']))
-                ->badge(fn (Builder $query) => $query->whereIn('status', ['pending', 'proses'])->count()),
+                // Menggunakan DB Facade untuk badge count
+                ->badge(DB::table('kelola_komplains')->whereIn('status', ['pending', 'proses'])->count()),
             'selesai' => ListRecords\Tab::make('Selesai')
                 ->modifyQueryUsing(fn (Builder $query) => $query->where('status', 'selesai'))
-                ->badge(fn (Builder $query) => $query->where('status', 'selesai')->count()),
+                 // Menggunakan DB Facade untuk badge count
+                ->badge(DB::table('kelola_komplains')->where('status', 'selesai')->count()),
         ];
     }
 }

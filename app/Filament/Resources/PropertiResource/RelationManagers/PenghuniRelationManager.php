@@ -131,9 +131,7 @@ class PenghuniRelationManager extends RelationManager
                                     TextInput::make('no_hp_kontak_darurat_penghuni')
                                         ->label('Nomor Telepon Kontak Darurat')
                                         ->required(),
-                                    TextInput::make('hubungan_kontak_darurat_penghuni')
-                                        ->label('Hubungan Kontak Darurat')
-                                        ->required(),
+                                  
                                 ]),
                         ]),
                 ]),

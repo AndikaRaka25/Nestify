@@ -128,21 +128,31 @@ class KamarResource extends Resource
                     ->label('Nama Kamar')
                     ->searchable()
                     ->sortable(),
-                    Tables\Columns\TextColumn::make('penghuni.nama_penghuni')
-                    ->label('Dihuni oleh')
-                    ->placeholder('--- KOSONG ---')
-                    ->searchable(),
-
-                // --- KOLOM STATUS YANG LEBIH JELAS ---
-                Tables\Columns\BadgeColumn::make('status_kamar')
-                    ->label('Status Kamar')
-                    ->formatStateUsing(fn (string $state): string => ucfirst($state)) // Membuatnya jadi "Aktif" atau "Kosong"
-                    ->color(fn (string $state): string => match (strtolower($state)) {
-                        'aktif' => 'success', // 'Aktif' berarti kamar terisi
-                        'kosong' => 'danger', // 'Kosong' berarti kamar tidak terisi
-                        default => 'gray',
+                  Tables\Columns\TextColumn::make('penghuni_aktif')
+                    ->label('Dihuni Oleh')
+                    ->getStateUsing(function (Kamar $record): string {
+                        // Cari penghuni yang terhubung DAN statusnya 'Aktif'
+                        $penghuni = $record->penghuni()
+                                          ->where('status_penghuni', 'Aktif')
+                                          ->first();
+                        
+                        // Jika ditemukan, kembalikan namanya. Jika tidak, kembalikan 'Kosong'.
+                        return $penghuni?->nama_penghuni ?? 'Kosong';
+                    })
+                    ->searchable(query: function (Builder $query, string $search): Builder {
+                        // Membuat fungsi pencarian bekerja dengan benar pada relasi
+                        return $query->whereHas('penghuni', function (Builder $query) use ($search) {
+                            $query->where('nama_penghuni', 'like', "%{$search}%")
+                                  ->where('status_penghuni', 'Aktif');
+                        });
                     }),
-                
+
+                Tables\Columns\BadgeColumn::make('status_kamar')
+                    ->colors([
+                        'primary' => 'Kosong',
+                        'success' => 'Aktif',
+                        'warning' => 'Perbaikan',
+                    ]),
             ])
             ->filters([
                 SelectFilter::make('properti_id')

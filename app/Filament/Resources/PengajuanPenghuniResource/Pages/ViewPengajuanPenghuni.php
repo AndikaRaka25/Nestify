@@ -4,9 +4,16 @@ namespace App\Filament\Resources\PengajuanPenghuniResource\Pages;
 
 use App\Filament\Resources\PengajuanPenghuniResource;
 use Filament\Actions;
-use Filament\Resources\Pages\CreateRecord;
+use Filament\Resources\Pages\ViewRecord;
 
-class CreatePengajuanPenghuni extends CreateRecord
+class ViewPengajuanPenghuni extends ViewRecord
 {
     protected static string $resource = PengajuanPenghuniResource::class;
+
+    protected function getHeaderActions(): array
+    {
+        return [
+            Actions\EditAction::make(),
+        ];
+    }
 }

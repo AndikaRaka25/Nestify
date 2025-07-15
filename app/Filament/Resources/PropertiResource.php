@@ -28,7 +28,8 @@ use Illuminate\Database\Eloquent\SoftDeletingScope;
 use App\Filament\Resources\PropertiResource\RelationManagers;
 use Symfony\Component\HttpKernel\Attribute\MapQueryString; 
 use Illuminate\Support\Facades\Auth;
-
+use Filament\Forms\Components\Grid;
+use Filament\Forms\Components\ToggleButtons;
 class PropertiResource extends Resource
 {
     protected static ?string $model = Properti::class;
@@ -107,7 +108,30 @@ class PropertiResource extends Resource
                                                             TextInput::make('nama_pemilik_rekening')->required(),
                                                         ])->columns(2)->addActionLabel('Tambah Metode Pembayaran'),
                                                 ]),
+                                                Forms\Components\Section::make('Diskon & Promo')
+                                    ->description('Tambahkan kode promo yang bisa digunakan penyewa.')
+                                    ->schema([
+                                        Repeater::make('discounts')
+                                            ->label('Daftar Diskon')
+                                            ->schema([
+                                                Grid::make(2)->schema([
+                                                    TextInput::make('kode_promo')->label('Kode Promo')->required(),
+                                                    TextInput::make('deskripsi_promo')->label('Deskripsi Singkat (misal: Hemat 10%)')->required(),
+                                                ]),
+                                                Grid::make(2)->schema([
+                                                    ToggleButtons::make('jenis_diskon')
+                                                        ->label('Jenis Diskon')
+                                                        ->options([
+                                                            'persen' => 'Persentase (%)',
+                                                            'nominal' => 'Nominal (Rp)',
+                                                        ])
+                                                        ->required()
+                                                        ->inline(),
+                                                    TextInput::make('nilai_diskon')->label('Nilai Diskon')->numeric()->required(),
+                                                ]),
+                                            ])->addActionLabel('Tambah Diskon'),
                                         ]),
+                                    ]),
                                 ]),
                         ]),
 

@@ -12,6 +12,7 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Filament\Tables\Actions\Action;
 use Filament\Notifications\Notification;
+use Illuminate\Support\Facades\DB; // 💡 Pastikan DB Facade di-import
 
 class KelolaKomplainResource extends Resource
 {
@@ -21,14 +22,24 @@ class KelolaKomplainResource extends Resource
 
     public static function form(Form $form): Form
     {
-        return $form
+         return $form
             ->schema([
-                Forms\Components\TextInput::make('penghuni.nama_penghuni')->label('Pelapor')->disabled(),
-                Forms\Components\TextInput::make('kamar.nama_kamar')->label('Kamar')->disabled(),
+                // ✅ --- PERBAIKAN DI SINI --- ✅
+                Forms\Components\Select::make('penghuni_id')
+                    ->label('Pelapor')
+                    ->relationship('penghuni', 'nama_penghuni') // Mengambil nama dari relasi 'penghuni'
+                    ->disabled(), // Dibuat read-only
+
+                Forms\Components\Select::make('kamar_id')
+                    ->label('Kamar')
+                    ->relationship('kamar', 'nama_kamar') // Mengambil nama dari relasi 'kamar'
+                    ->disabled(), // Dibuat read-only
+
                 Forms\Components\TextInput::make('judul')->disabled(),
                 Forms\Components\Textarea::make('deskripsi')->disabled()->columnSpanFull(),
                 Forms\Components\FileUpload::make('lampiran')
                     ->label('Lampiran Foto')
+                    ->multiple() // Pastikan ini ada agar bisa menampilkan banyak foto
                     ->image()
                     ->disabled(),
             ]);
@@ -86,15 +97,20 @@ class KelolaKomplainResource extends Resource
             ->bulkActions([]);
     }
     
-    public static function getNavigationBadge(): ?string
+   
+   public static function getNavigationBadge(): ?string
     {
-        // Memberi notifikasi jumlah komplain yang masih aktif
         return static::getModel()::whereIn('status', ['pending', 'proses'])->count();
     }
 
     public static function getNavigationBadgeColor(): string|array|null
     {
-        return static::getModel()::whereIn('status', ['pending', 'proses'])->count() > 0 ? 'warning' : 'success';
+         try {
+            $count = DB::selectOne("SELECT COUNT(*) as count FROM kelola_komplains WHERE status IN ('pending', 'proses')")->count;
+            return $count > 0 ? 'warning' : 'primary'; 
+        } catch (\Exception $e) {
+            return 'danger';
+        }
     }
 
     public static function getPages(): array

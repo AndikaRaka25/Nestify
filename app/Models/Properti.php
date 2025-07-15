@@ -6,7 +6,8 @@ use Illuminate\Http\Request;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Support\Facades\DB;
-
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 
 class Properti extends Model
@@ -25,6 +26,7 @@ class Properti extends Model
         'harga_sewa', 
         'biaya_tambahan',
         'info_pembayaran',
+        'discounts',
 
     ];
     protected $casts = [
@@ -32,17 +34,29 @@ class Properti extends Model
         'harga_sewa' => 'array', 
         'biaya_tambahan' => 'array', 
         'info_pembayaran' => 'array', 
+        'discounts' => 'array', // Pastikan ini sesuai dengan tipe data yang Anda inginkan
     ];
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
     public function kamars()
     {
         return $this->hasMany(Kamar::class);
     }
+
 
     public function penghunis()
     {
         return $this->hasMany(Penghuni::class);
     }
 
+     public function penghuni(): HasMany
+    {
+        return $this->hasMany(Penghuni::class);
+    }
 
 protected static function boot()
 {

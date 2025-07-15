@@ -21,6 +21,16 @@ class KelolaKomplain extends Model
         'lampiran',
         'status',
     ];
+    
+    /**
+     * ✅ --- PERBAIKAN UTAMA DI SINI --- ✅
+     * Properti $casts ini memberitahu Laravel untuk secara otomatis
+     * mengubah array menjadi JSON saat menyimpan ke database,
+     * dan sebaliknya saat mengambil data.
+     */
+    protected $casts = [
+        'lampiran' => 'array',
+    ];
 
     public function penghuni(): BelongsTo
     {

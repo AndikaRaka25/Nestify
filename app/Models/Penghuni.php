@@ -26,8 +26,9 @@ class Penghuni extends Model
         'foto_ktp_penghuni',
         'nama_kontak_darurat_penghuni',
         'no_hp_kontak_darurat_penghuni',
-        'hubungan_kontak_darurat_penghuni',
         'status_penghuni',
+        'alasan_berhenti', 
+        'rencana_tanggal_keluar',
         'durasi_sewa',
         'total_tagihan',
         'mulai_sewa',
@@ -44,6 +45,7 @@ class Penghuni extends Model
     protected $casts = [
         'mulai_sewa' => 'date',
         'jatuh_tempo' => 'date',
+        'rencana_tanggal_keluar' => 'date',
     ];
 
     /**

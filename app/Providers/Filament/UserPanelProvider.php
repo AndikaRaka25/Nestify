@@ -18,6 +18,8 @@ use Illuminate\Routing\Middleware\SubstituteBindings;
 use Illuminate\Session\Middleware\StartSession;
 use Illuminate\View\Middleware\ShareErrorsFromSession;
 use App\Models\User;
+use App\Filament\User\Widgets\AccountWidget;
+use App\Filament\User\Widgets\StatsOverview;
 
 class UserPanelProvider extends PanelProvider
 {
@@ -34,14 +36,14 @@ class UserPanelProvider extends PanelProvider
             ->brandLogoHeight('2rem') 
             ->darkMode(false)
             ->discoverResources(in: app_path('Filament/User/Resources'), for: 'App\\Filament\\User\\Resources')
-            ->discoverPages(in: app_path('Filament/User/Pages'), for: 'App\\Filament\\User\\Pages')
+            ->discoverPages(in: app_path('Filament/User/PagesUser'), for: 'App\\Filament\\User\\PagesUser')
             ->pages([
                 Pages\Dashboard::class,
             ])
-            ->discoverWidgets(in: app_path('Filament/User/Widgets'), for: 'App\\Filament\\User\\Widgets')
+            ->discoverWidgets(in: app_path('Filament/User/WidgetsUser'), for: 'App\\Filament\\User\\WidgetsUser')
             ->widgets([
                 Widgets\AccountWidget::class,
-                Widgets\FilamentInfoWidget::class,
+              
             ])
             ->middleware([
                 EncryptCookies::class,

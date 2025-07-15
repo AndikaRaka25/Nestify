@@ -4,29 +4,49 @@ namespace App\Filament\Resources\TagihanResource\Widgets;
 
 use App\Models\Properti;
 use App\Models\Tagihan;
-use Carbon\Carbon;
 use Filament\Widgets\ChartWidget;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class TagihanChart extends ChartWidget
 {
-    protected static ?string $heading = 'Grafik Pendapatan Lunas (12 Bulan Terakhir)';
-    protected static ?string $maxHeight = '300px';
-    protected int | string | array $columnSpan = 1; // Mengatur lebar widget
+    protected static ?string $heading = 'Pendapatan Lunas';
+    protected static ?string $description = 'Menampilkan pendapatan dari tagihan lunas dalam 6 bulan terakhir.';
+    protected static ?int $sort = 3;
 
-    public ?string $filter = 'all';
+    // Nilai default null akan mewakili 'Semua Properti'
+    public ?string $filter = null; 
 
+    /**
+     * ✅ Tetap menggunakan getFilters() sesuai permintaan Anda.
+     */
     protected function getFilters(): ?array
     {
-        $propertiOptions = Properti::pluck('nama_properti', 'id')->toArray();
-        return array_merge(['all' => 'Semua Properti'], $propertiOptions);
+        $propertiOptions = Properti::where('user_id', Auth::id())
+                                   ->pluck('nama_properti', 'id')
+                                   ->toArray();
+                                   
+        return [null => 'Semua Properti'] + $propertiOptions;
+    }
+
+    /**
+     * ✅ --- INI ADALAH "KABEL" YANG HILANG --- ✅
+     * Fungsi ini adalah "hook" dari Livewire. Ia akan otomatis berjalan
+     * setiap kali properti publik '$filter' diperbarui oleh dropdown.
+     */
+    public function updatedFilter(): void
+    {
+        $this->updateChartData();
     }
 
     protected function getData(): array
     {
+        $activeFilter = $this->filter;
         $labels = [];
         $dataPoints = [];
-        for ($i = 11; $i >= 0; $i--) {
+
+        // ✅ Rentang waktu diubah menjadi 6 bulan
+        for ($i = 5; $i >= 0; $i--) {
             $month = now()->subMonths($i);
             $labels[] = $month->format('M Y');
             $dataPoints[$month->format('Y-m')] = 0;
@@ -34,10 +54,14 @@ class TagihanChart extends ChartWidget
 
         $query = Tagihan::query()
             ->where('status', 'Lunas')
-            ->whereBetween('tanggal_bayar', [now()->subYear(), now()]);
+            ->whereBetween('tanggal_bayar', [now()->subMonths(5)->startOfMonth(), now()->endOfMonth()]);
 
-        if ($this->filter !== 'all') {
-            $query->where('properti_id', $this->filter);
+        // ✅ Logika filter sekarang akan bekerja
+        if (!is_null($activeFilter) && $activeFilter !== '') {
+            $query->where('properti_id', $activeFilter);
+        } else {
+            $userPropertiIds = Properti::where('user_id', Auth::id())->pluck('id');
+            $query->whereIn('properti_id', $userPropertiIds);
         }
 
         $pendapatanPerBulan = $query
@@ -50,7 +74,7 @@ class TagihanChart extends ChartWidget
 
         foreach ($pendapatanPerBulan as $item) {
             if (isset($dataPoints[$item->bulan])) {
-                $dataPoints[$item->bulan] = $item->total;
+                $dataPoints[$item->bulan] = (float) $item->total;
             }
         }
 

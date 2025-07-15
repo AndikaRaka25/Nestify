@@ -11,6 +11,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Filament\Notifications\Notification;
 use Filament\Tables\Actions\Action;
+use Filament\Tables\Filters\SelectFilter;
 
 class TagihanResource extends Resource
 {
@@ -40,6 +41,26 @@ class TagihanResource extends Resource
                 Forms\Components\Placeholder::make('invoice_number')
                     ->label('Nomor Invoice')
                     ->content(fn (?Tagihan $record): string => $record?->invoice_number ?? '-'),
+                
+                Forms\Components\Placeholder::make('diskon')
+                    ->label('Diskon yang Digunakan')
+                    // 🛑 Logika ->visible() DIHAPUS dari sini
+                    ->content(function (?Tagihan $record): string {
+                        // Cek jika ada data diskon yang tersimpan di dalam record tagihan
+                        if ($discount = $record?->applied_discount) {
+                            $nilai = $discount['nilai_diskon'];
+                            $jenis = $discount['jenis_diskon'];
+                            
+                            // Format tampilan berdasarkan jenis diskon
+                            $formattedValue = $jenis === 'persen' ? "{$nilai}%" : 'Rp ' . number_format($nilai, 0, ',', '.');
+                            
+                            // Kembalikan detail diskon
+                            return "{$discount['kode_promo']} ({$formattedValue})";
+                        }
+                        
+                        // Jika tidak ada diskon yang digunakan, tampilkan strip
+                        return '-';
+                    }),
                 
                 Forms\Components\Placeholder::make('periode')
                     ->label('Periode')
@@ -78,7 +99,16 @@ class TagihanResource extends Resource
                     }),
                 Tables\Columns\TextColumn::make('jatuh_tempo')->date()->sortable(),
             ])
-            ->filters([])
+            ->filters([
+                SelectFilter::make('properti_id')
+                    ->relationship('properti', 'nama_properti')
+                    ->placeholder('Pilih Properti')
+                    ->multiple()
+                    ->preload()
+                    ->columnSpan(2)
+                    ->label('Properti'),
+                
+            ])
             ->actions([
                 Tables\Actions\EditAction::make()->label('Lihat/Ubah Status'),
                 Action::make('konfirmasi')
@@ -100,6 +130,10 @@ class TagihanResource extends Resource
     public static function getRelations(): array
     {
         return [];
+    }
+    public static function getNavigationBadge(): ?string
+    {
+        return static::getModel()::whereIn('status', ['Belum Bayar', 'Butuh Konfirmasi'])->count();
     }
     
     public static function getPages(): array

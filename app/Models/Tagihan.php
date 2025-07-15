@@ -10,6 +10,12 @@ class Tagihan extends Model
 {
     use HasFactory;
 
+    protected $table = 'tagihans';
+
+    /**
+     * ✅ --- INI ADALAH PERBAIKAN UTAMA DAN SATU-SATUNYA --- ✅
+     * Memastikan SEMUA kolom yang kita butuhkan saat create ada di sini.
+     */
     protected $fillable = [
         'penghuni_id',
         'properti_id',
@@ -21,26 +27,29 @@ class Tagihan extends Model
         'status',
         'bukti_pembayaran',
         'tanggal_bayar',
+        'applied_discount',
     ];
 
+    /**
+     * The attributes that should be cast.
+     * Ini akan memastikan kolom tanggal terbaca sebagai objek tanggal.
+     */
     protected $casts = [
         'jatuh_tempo' => 'date',
         'tanggal_bayar' => 'datetime',
+        'applied_discount' => 'array', // Pastikan ini di-cast sebagai array
     ];
 
-    // Relasi ke Penghuni
     public function penghuni(): BelongsTo
     {
         return $this->belongsTo(Penghuni::class);
     }
 
-    // Relasi ke Properti
     public function properti(): BelongsTo
     {
         return $this->belongsTo(Properti::class);
     }
 
-    // Relasi ke Kamar
     public function kamar(): BelongsTo
     {
         return $this->belongsTo(Kamar::class);
