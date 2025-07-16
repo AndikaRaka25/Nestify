@@ -53,8 +53,7 @@ class UserPanelProvider extends PanelProvider
                 ->url(fn (): string => HelpCenterUser::getUrl())
                 ->icon('heroicon-o-question-mark-circle'),
             ])
-            ->brandName('Nestify') 
-            ->brandLogo(asset('storage/landing_page/logo_nestify.png')) 
+            ->brandLogo(fn () => \Illuminate\Support\Facades\View::make('filament.user.partials.custom-brand'))
             ->brandLogoHeight('2rem') 
             ->darkMode(false)
             ->discoverResources(in: app_path('Filament/User/Resources'), for: 'App\\Filament\\User\\Resources')

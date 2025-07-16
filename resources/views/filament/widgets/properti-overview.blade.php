@@ -28,11 +28,12 @@
     <x-filament::section>
         <div @class([
             'filament-stats grid gap-4 lg:gap-8',
-            'md:grid-cols-3' => count($stats) === 3 || count($stats) === 6,
-            'md:grid-cols-1' => count($stats) === 1,
-            'md:grid-cols-2' => count($stats) === 2 || count($stats) === 4,
-            'md:grid-cols-4' => count($stats) === 4 || count($stats) === 8,
-            'md:grid-cols-2 xl:grid-cols-4' => count($stats) > 4 && count($stats) < 8,
+            // Perubahan di sini: Selalu gunakan grid-cols-3 pada ukuran md ke atas,
+            // dan grid-cols-1 atau grid-cols-2 untuk ukuran yang lebih kecil agar tetap responsif.
+            // Ini akan memastikan kartu tidak melebar penuh jika hanya ada satu.
+            'md:grid-cols-3', // Selalu tampilkan 3 kolom pada ukuran medium ke atas
+            'sm:grid-cols-2', // Tampilkan 2 kolom pada ukuran small
+            'grid-cols-1',    // Tampilkan 1 kolom pada ukuran ekstra kecil
         ])>
             @foreach ($stats as $stat)
                 {{ $stat }}
@@ -40,3 +41,4 @@
         </div>
     </x-filament::section>
 </x-filament-widgets::widget>
+

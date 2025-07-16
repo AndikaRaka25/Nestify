@@ -25,14 +25,12 @@ use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse;
-use Filament\Support\Assets\Css;
-use Filament\Support\Assets\Js;
-use Filament\Support\Facades\FilamentAsset;
 use Illuminate\Auth\Middleware\EnsureEmailIsVerified;
 use Filament\Http\Responses\Auth\Contracts\LogoutResponse as LogoutResponseContract;
 use App\Models\User;
 use App\Filament\Pages\HelpCenter;
-
+use App\Filament\Resources\TagihanResource\Widgets\TagihanChart;
+use App\Filament\Resources\TagihanResource\Widgets\TotalTagihanChart;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -56,8 +54,10 @@ class AdminPanelProvider extends PanelProvider
                 
             ])
             ->widgets([
-                StatsOverview::class,
-                PropertiOverview::class,
+                TagihanChart::class, 
+                TotalTagihanChart::class, 
+                StatsOverview::class, 
+                PropertiOverview::class, 
                 
             ])
             ->userMenuItems([
@@ -70,8 +70,7 @@ class AdminPanelProvider extends PanelProvider
                 ->url(fn (): string => HelpCenter::getUrl())
                 ->icon('heroicon-o-question-mark-circle'),
             ])
-            ->brandName('Nestify') 
-            ->brandLogo(asset('storage/landing_page/logo_nestify.png')) 
+            ->brandLogo(fn () => \Illuminate\Support\Facades\View::make('filament.admin.partials.custom-brand'))
             ->brandLogoHeight('2rem') 
             ->darkMode(false)
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')

@@ -33,6 +33,11 @@ use Filament\Forms\Get;
 use Filament\Forms\Set;
 use Illuminate\Validation\Rules\Unique;
 use Illuminate\Database\Eloquent\Model;
+use Filament\Forms\Components\Section; // Import Section
+use Filament\Forms\Components\Grid; // Import Grid
+use Filament\Forms\Components\Placeholder; // Import Placeholder
+use Filament\Tables\Actions\ViewAction; // Import ViewAction
+use Carbon\Carbon; 
 
 
 class KamarResource extends Resource
@@ -43,6 +48,7 @@ class KamarResource extends Resource
 
     protected static ?string $navigationBadgeTooltip = 'Jumlah Kamar';
     protected static ?string $navigationIcon = 'heroicon-o-rectangle-stack';
+     protected static ?string $label = 'Data Kamar';
     
 
 
@@ -164,7 +170,79 @@ class KamarResource extends Resource
                     ->label('Properti'),
             ])
             ->actions([
-                    Tables\Actions\ViewAction::make(),
+                    ViewAction::make()
+                    ->label('Lihat Detail')
+                    ->icon('heroicon-o-eye')
+                    ->modalHeading(fn (Kamar $record) => 'Detail Kamar: ' . $record->nama_kamar)
+                    ->modalSubmitAction(false) // Tidak ada tombol "Simpan"
+                    ->modalCancelActionLabel('Tutup')
+                    ->modalWidth('4xl') // Buat modal lebih lebar
+                    ->form(function (Kamar $record): array {
+                        // Mendapatkan penghuni aktif yang terkait dengan kamar ini
+                        $penghuni = $record->penghuni()->where('status_penghuni', 'Aktif')->first();
+
+                        $schema = [
+                            Section::make('Informasi Kamar')
+                                ->schema([
+                                    Grid::make(2)->schema([
+                                        Placeholder::make('nama_kamar_ph')
+                                            ->label('Nama Kamar')
+                                            ->content($record->nama_kamar),
+                                        Placeholder::make('tipe_kamar_ph')
+                                            ->label('Tipe Kamar')
+                                            ->content($record->tipe_kamar),
+                                    ]),
+                                    Placeholder::make('properti_ph')
+                                        ->label('Properti')
+                                        ->content($record->properti->nama_properti),
+                                    Placeholder::make('status_kamar_ph')
+                                        ->label('Status Kamar')
+                                        ->content(ucfirst($record->status_kamar)),
+                                ])->columns(1), // Mengatur layout kolom dalam section
+
+                            // Bagian Detail Penghuni (kondisional)
+                            Section::make('Detail Penghuni Aktif')
+                                ->visible(fn () => $penghuni !== null) // Hanya tampilkan jika ada penghuni
+                                ->schema([
+                                    Grid::make(2)->schema([
+                                        Placeholder::make('penghuni_nama')
+                                            ->label('Nama Penghuni')
+                                            ->content($penghuni->nama_penghuni ?? '-'),
+                                        Placeholder::make('penghuni_email')
+                                            ->label('Email Penghuni')
+                                            ->content($penghuni->email_penghuni ?? '-'),
+                                        Placeholder::make('penghuni_nohp')
+                                            ->label('No. HP Penghuni')
+                                            ->content($penghuni->no_hp_penghuni ?? '-'),
+                                        Placeholder::make('penghuni_mulai_sewa')
+                                            ->label('Mulai Sewa')
+                                            ->content(fn () => $penghuni?->mulai_sewa ? Carbon::parse($penghuni->mulai_sewa)->format('d F Y') : '-'),
+                                        Placeholder::make('penghuni_jatuh_tempo')
+                                            ->label('Jatuh Tempo Berikutnya')
+                                            ->content(fn () => $penghuni?->jatuh_tempo ? Carbon::parse($penghuni->jatuh_tempo)->format('d F Y') : '-'),
+                                    ]),
+                                    // Tombol untuk melihat detail lengkap penghuni
+                                    Forms\Components\Actions::make([
+                                        Forms\Components\Actions\Action::make('view_penghuni_detail')
+                                            ->label('Lihat Detail Lengkap Penghuni')
+                                            ->icon('heroicon-o-arrow-top-right-on-square')
+                                            ->url(fn () => \App\Filament\Resources\PenghuniResource::getUrl('view', ['record' => $penghuni->id]))
+                                            ->openUrlInNewTab(),
+                                    ])->visible(fn () => $penghuni !== null), // Hanya tampilkan jika ada penghuni
+                                ])->collapsible(), // Bisa dilipat
+
+                            // Pesan jika tidak ada penghuni aktif
+                            Section::make('Penghuni Kamar Ini')
+                                ->visible(fn () => $penghuni === null) // Hanya tampilkan jika tidak ada penghuni
+                                ->schema([
+                                    Placeholder::make('no_penghuni')
+                                        ->label('')
+                                        ->content('Tidak ada penghuni aktif di kamar ini.')
+                                        ->columnSpanFull(),
+                                ])->collapsible(), // Bisa dilipat
+                        ];
+                        return $schema; // ✅ MENAMBAHKAN RETURN STATEMENT INI
+                    }),
                     Tables\Actions\EditAction::make(),
                     Tables\Actions\DeleteAction::make(),
             ])

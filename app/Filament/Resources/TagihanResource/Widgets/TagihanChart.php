@@ -12,7 +12,8 @@ class TagihanChart extends ChartWidget
 {
     protected static ?string $heading = 'Pendapatan Lunas';
     protected static ?string $description = 'Menampilkan pendapatan dari tagihan lunas dalam 6 bulan terakhir.';
-    protected static ?int $sort = 3;
+
+     protected int | string | array $columnSpan = 1;
 
     // Nilai default null akan mewakili 'Semua Properti'
     public ?string $filter = null; 

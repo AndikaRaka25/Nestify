@@ -12,6 +12,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Validation\Rules\Unique;
+use App\Filament\Resources\KamarResource; // Import KamarResource
 
 class KamarsRelationManager extends RelationManager
 {
@@ -64,7 +65,6 @@ class KamarsRelationManager extends RelationManager
         return $table
             ->recordTitleAttribute('nama_kamar')
             ->columns([
-                // ✨ KOLOM DIPERBARUI AGAR LEBIH INFORMATIF ✨
                 Tables\Columns\TextColumn::make('tipe_kamar')
                     ->label('Tipe Kamar')
                     ->searchable(),
@@ -72,7 +72,6 @@ class KamarsRelationManager extends RelationManager
                     ->label('Nama Kamar')
                     ->searchable(),
                 
-                // ✨ KOLOM BARU: Menampilkan nama penghuni yang aktif ✨
                 Tables\Columns\TextColumn::make('penghuni_aktif')
                     ->label('Dihuni Oleh')
                     ->getStateUsing(function (Kamar $record): string {
@@ -82,7 +81,6 @@ class KamarsRelationManager extends RelationManager
                         return $penghuni?->nama_penghuni ?? 'Kosong';
                     }),
                 
-                // ✨ KOLOM DIPERBARUI: Menggunakan Badge agar konsisten ✨
                 Tables\Columns\BadgeColumn::make('status_kamar')
                     ->label('Status Kamar')
                     ->colors([
@@ -94,8 +92,10 @@ class KamarsRelationManager extends RelationManager
                 //
             ])
             ->headerActions([
+                // ✅ --- PERBAIKAN DI SINI: Arahkan ke halaman create KamarResource --- ✅
                 Tables\Actions\CreateAction::make()
-                    ->label('Tambah Kamar'),
+                    ->label('Tambah Kamar')
+                    ->url(fn (): string => KamarResource::getUrl('create', ['properti_id' => $this->getOwnerRecord()->id])),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
@@ -108,3 +108,4 @@ class KamarsRelationManager extends RelationManager
             ]);
     }
 }
+
