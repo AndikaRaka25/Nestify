@@ -5,7 +5,7 @@ namespace App\Observers;
 use App\Models\Penghuni;
 use App\Notifications\NotifikasiPenyewaBaru;
 use App\Notifications\NotifikasiAjukanBerhenti;
-use App\Filament\Resources\PengajuanPenghuniResource;
+use Illuminate\Support\Str;
 
 class PenghuniObserver
 {
@@ -13,7 +13,7 @@ class PenghuniObserver
     {
         $properti = $penghuni->properti;
         $pemilik  = $properti?->pemilik;
-$url = PengajuanPenghuniResource::getUrl();
+
         if (! $pemilik) return;
 
         $namaKamar = $penghuni->kamar->nama_kamar ?? null;
@@ -31,8 +31,6 @@ $url = PengajuanPenghuniResource::getUrl();
 
     public function updated(Penghuni $penghuni): void
     {
-        $url = PengajuanPenghuniResource::getUrl();
-         // ======== Trigger: Ajukan Berhenti ========
         $statusChanged = $penghuni->wasChanged('status_penghuni');
         $hasBerhentiInStatus = $statusChanged && stripos($penghuni->status_penghuni, 'berhenti') !== false;
 
@@ -47,11 +45,7 @@ $url = PengajuanPenghuniResource::getUrl();
             }
 
             $url = null;
-            // Arahkan ke halaman pemilik untuk meninjau/menindaklanjuti:
-            // Opsi A (Filament Resource Penghuni):
-            // $url = \App\Filament\Resources\PenghuniResource::getUrl('view', ['record' => $penghuni->id]);
-            // Opsi B (Route kustom ke detail Penghuni):
-            $url =  route('filament.admin.resources.pengajuan-berhenti.index', $penghuni->id); // ganti sesuai rute yang ada di aplikasi Anda
+            $url = route('filament.admin.resources.pengajuan-penghunis.index', $penghuni->id);
 
             $pemilik->notify(new NotifikasiAjukanBerhenti(
                 penghuniId: $penghuni->id,
@@ -61,7 +55,7 @@ $url = PengajuanPenghuniResource::getUrl();
                 namaProperti: $properti->nama_properti,
                 alasanBerhenti: $penghuni->alasan_berhenti,
                 rencanaTanggalKeluar: optional($penghuni->rencana_tanggal_keluar)->format('Y-m-d') ?? (string)$penghuni->rencana_tanggal_keluar,
-                urlDetail: $url
+                urlDetail: $url,
             ));
         }
         if ($penghuni->wasChanged('status_penghuni') && $penghuni->status_penghuni === 'Aktif') {

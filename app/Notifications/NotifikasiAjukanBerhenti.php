@@ -5,7 +5,6 @@ namespace App\Notifications;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 use Illuminate\Notifications\Messages\MailMessage;
-use App\Filament\Resources\PengajuanPenghuniResource;
 
 class NotifikasiAjukanBerhenti extends Notification
 {
@@ -19,15 +18,8 @@ class NotifikasiAjukanBerhenti extends Notification
         public string $namaProperti,
         public ?string $alasanBerhenti = null,
         public ?string $rencanaTanggalKeluar = null,
-        public ?string $urlDetail = null // link ke halaman review/handle permintaan
+        public ?string $urlDetail = null,
     ) {}
-private function resolveUrl(): string
-{
-    if ($this->urlDetail) {
-        return $this->urlDetail;
-    }
-    return PengajuanPenghuniResource::getUrl();
-}
 
     public function via($notifiable): array
     {
@@ -47,7 +39,7 @@ private function resolveUrl(): string
             'kamar_id'    => $this->kamarId,
             'alasan'      => $this->alasanBerhenti,
             'rencana_keluar' => $this->rencanaTanggalKeluar,
-            'url'          => $this->resolveUrl(),
+            'url'         => route('filament.admin.resources.pengajuan-penghunis.index'),
         ];
     }
 
@@ -60,6 +52,6 @@ private function resolveUrl(): string
             ->line($this->rencanaTanggalKeluar ? "Rencana tanggal keluar: {$this->rencanaTanggalKeluar}" : '')
             ->line($this->alasanBerhenti ? "Alasan: {$this->alasanBerhenti}" : '');
 
-        return $mail->action('Tinjau Permintaan', $this->resolveUrl());
+        return $mail->action('Tinjau Permintaan', $this->urlDetail ?? url('filament.admin.resources.pengajuan-penghunis.index'));
     }
 }
