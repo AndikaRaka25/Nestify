@@ -30,7 +30,6 @@ class ViewPenghuni extends ViewRecord
         ];
     }
 
-    // Overriding form schema for tampilan view dengan tabs
     protected function getFormSchema(): array
     {
         return [
@@ -58,7 +57,7 @@ class ViewPenghuni extends ViewRecord
                             TextInput::make('no_hp_penghuni')
                                 ->label('Nomor Telepon'),
                             ]),
-                    // Tab Kontrak sewa
+                    
                     Tabs\Tab::make('Kontrak sewa')
                         ->schema([
                             TextInput::make('durasi_sewa')

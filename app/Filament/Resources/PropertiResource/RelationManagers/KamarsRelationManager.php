@@ -2,7 +2,7 @@
 
 namespace App\Filament\Resources\PropertiResource\RelationManagers;
 
-use App\Models\Kamar; // <-- Import model Kamar
+use App\Models\Kamar; 
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Forms\Components\Select;
@@ -12,7 +12,7 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Validation\Rules\Unique;
-use App\Filament\Resources\KamarResource; // Import KamarResource
+use App\Filament\Resources\KamarResource; 
 
 class KamarsRelationManager extends RelationManager
 {
@@ -53,8 +53,7 @@ class KamarsRelationManager extends RelationManager
                             }
                         ),
                     
-                    // Status kamar tidak perlu di form, akan di-update otomatis
-                    // saat ada penghuni masuk atau keluar.
+                   
                         
                 ]) ->columns(2),
             ]);
@@ -92,7 +91,7 @@ class KamarsRelationManager extends RelationManager
                 //
             ])
             ->headerActions([
-                // ✅ --- PERBAIKAN DI SINI: Arahkan ke halaman create KamarResource --- ✅
+                
                 Tables\Actions\CreateAction::make()
                     ->label('Tambah Kamar')
                     ->url(fn (): string => KamarResource::getUrl('create', ['properti_id' => $this->getOwnerRecord()->id])),

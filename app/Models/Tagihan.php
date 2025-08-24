@@ -12,10 +12,7 @@ class Tagihan extends Model
 
     protected $table = 'tagihans';
 
-    /**
-     * ✅ --- INI ADALAH PERBAIKAN UTAMA DAN SATU-SATUNYA --- ✅
-     * Memastikan SEMUA kolom yang kita butuhkan saat create ada di sini.
-     */
+   
     protected $fillable = [
         'penghuni_id',
         'properti_id',
@@ -27,14 +24,11 @@ class Tagihan extends Model
         'status',
         'bukti_pembayaran',
         'tanggal_bayar',
-        'applied_discount_code', // KODE promo yang diterapkan
-        'applied_discount_details', // Detail diskon yang diterapkan
+        'applied_discount_code', 
+        'applied_discount_details', 
     ];
 
-    /**
-     * The attributes that should be cast.
-     * Ini akan memastikan kolom tanggal terbaca sebagai objek tanggal.
-     */
+    
     protected $casts = [
         'jatuh_tempo' => 'date',
         'tanggal_bayar' => 'datetime',

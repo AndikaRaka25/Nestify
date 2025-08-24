@@ -21,7 +21,7 @@ class PenyewaDashboard extends BaseDashboard
         return 'full'; // Menggunakan lebar penuh untuk fleksibilitas
     }
 
-    // Mendaftarkan widget-widget kustom kita
+    
     public function getWidgets(): array
     {
         return [

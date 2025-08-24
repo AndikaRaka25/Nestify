@@ -11,7 +11,7 @@ class CreateKelolaKomplain extends CreateRecord
     protected static string $resource = KelolaKomplainResource::class;
     protected function getRedirectUrl(): string
     {
-        // Mengembalikan URL ke halaman index (daftar) dari resource ini
+        
         return static::getResource()::getUrl('index');
     }
 }

@@ -10,15 +10,15 @@ class TotalTagihanChart extends ChartWidget
     protected static ?string $heading = 'Total Keuangan';
     protected static ?string $maxHeight = '300px';
 
-    // Mengatur agar widget ini hanya memakan 1 kolom dari total 3 kolom grid
+    
     protected int | string | array $columnSpan = 1;
 
     protected function getData(): array
     {
-        // Hitung total tagihan lunas
+       
         $totalLunas = Tagihan::where('status', 'Lunas')->sum('total_tagihan');
 
-        // Hitung total tagihan yang belum lunas (Belum Bayar + Butuh Konfirmasi)
+        
         $totalBelumLunas = Tagihan::whereIn('status', ['Belum Bayar', 'Butuh Konfirmasi'])->sum('total_tagihan');
 
         return [

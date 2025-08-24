@@ -11,7 +11,7 @@ class CreateTagihan extends CreateRecord
     protected static string $resource = TagihanResource::class;
     protected function getRedirectUrl(): string
     {
-        // Mengembalikan URL ke halaman index (daftar) dari resource ini
+        
         return static::getResource()::getUrl('index');
     }
 }

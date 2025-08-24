@@ -97,7 +97,7 @@ class KamarResource extends Resource
                                     return []; // Kembalikan array kosong jika properti tidak punya data harga sewa
                                 }
 
-                                // Ambil data 'tipe' dari array harga_sewa dan jadikan opsi
+                                
                                 $tipeOptions = collect($properti->harga_sewa)->pluck('tipe', 'tipe');
                                 
                                 return $tipeOptions;
@@ -137,16 +137,16 @@ class KamarResource extends Resource
                   Tables\Columns\TextColumn::make('penghuni_aktif')
                     ->label('Dihuni Oleh')
                     ->getStateUsing(function (Kamar $record): string {
-                        // Cari penghuni yang terhubung DAN statusnya 'Aktif'
+                        
                         $penghuni = $record->penghuni()
                                           ->where('status_penghuni', 'Aktif')
                                           ->first();
                         
-                        // Jika ditemukan, kembalikan namanya. Jika tidak, kembalikan 'Kosong'.
+                       
                         return $penghuni?->nama_penghuni ?? 'Kosong';
                     })
                     ->searchable(query: function (Builder $query, string $search): Builder {
-                        // Membuat fungsi pencarian bekerja dengan benar pada relasi
+                        
                         return $query->whereHas('penghuni', function (Builder $query) use ($search) {
                             $query->where('nama_penghuni', 'like', "%{$search}%")
                                   ->where('status_penghuni', 'Aktif');
@@ -176,9 +176,8 @@ class KamarResource extends Resource
                     ->modalHeading(fn (Kamar $record) => 'Detail Kamar: ' . $record->nama_kamar)
                     ->modalSubmitAction(false) // Tidak ada tombol "Simpan"
                     ->modalCancelActionLabel('Tutup')
-                    ->modalWidth('4xl') // Buat modal lebih lebar
+                    ->modalWidth('4xl') 
                     ->form(function (Kamar $record): array {
-                        // Mendapatkan penghuni aktif yang terkait dengan kamar ini
                         $penghuni = $record->penghuni()->where('status_penghuni', 'Aktif')->first();
 
                         $schema = [
@@ -198,11 +197,11 @@ class KamarResource extends Resource
                                     Placeholder::make('status_kamar_ph')
                                         ->label('Status Kamar')
                                         ->content(ucfirst($record->status_kamar)),
-                                ])->columns(1), // Mengatur layout kolom dalam section
+                                ])->columns(1), 
 
                             // Bagian Detail Penghuni (kondisional)
                             Section::make('Detail Penghuni Aktif')
-                                ->visible(fn () => $penghuni !== null) // Hanya tampilkan jika ada penghuni
+                                ->visible(fn () => $penghuni !== null) 
                                 ->schema([
                                     Grid::make(2)->schema([
                                         Placeholder::make('penghuni_nama')
@@ -221,19 +220,19 @@ class KamarResource extends Resource
                                             ->label('Jatuh Tempo Berikutnya')
                                             ->content(fn () => $penghuni?->jatuh_tempo ? Carbon::parse($penghuni->jatuh_tempo)->format('d F Y') : '-'),
                                     ]),
-                                    // Tombol untuk melihat detail lengkap penghuni
+                                    
                                     Forms\Components\Actions::make([
                                         Forms\Components\Actions\Action::make('view_penghuni_detail')
                                             ->label('Lihat Detail Lengkap Penghuni')
                                             ->icon('heroicon-o-arrow-top-right-on-square')
                                             ->url(fn () => \App\Filament\Resources\PenghuniResource::getUrl('view', ['record' => $penghuni->id]))
                                             ->openUrlInNewTab(),
-                                    ])->visible(fn () => $penghuni !== null), // Hanya tampilkan jika ada penghuni
-                                ])->collapsible(), // Bisa dilipat
+                                    ])->visible(fn () => $penghuni !== null), 
+                                ])->collapsible(), 
 
                             // Pesan jika tidak ada penghuni aktif
                             Section::make('Penghuni Kamar Ini')
-                                ->visible(fn () => $penghuni === null) // Hanya tampilkan jika tidak ada penghuni
+                                ->visible(fn () => $penghuni === null) 
                                 ->schema([
                                     Placeholder::make('no_penghuni')
                                         ->label('')
@@ -241,7 +240,7 @@ class KamarResource extends Resource
                                         ->columnSpanFull(),
                                 ])->collapsible(), // Bisa dilipat
                         ];
-                        return $schema; // ✅ MENAMBAHKAN RETURN STATEMENT INI
+                        return $schema; 
                     }),
                     Tables\Actions\EditAction::make(),
                     Tables\Actions\DeleteAction::make(),

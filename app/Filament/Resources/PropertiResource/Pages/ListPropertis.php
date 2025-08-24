@@ -21,7 +21,7 @@ class ListPropertis extends ListRecords
         ];
     }
     
-    // Optional: Jika ingin menambahkan widget statistik di atas tabel
+    
     protected function getHeaderWidgets(): array
     {
         return [

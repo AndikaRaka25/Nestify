@@ -84,11 +84,11 @@ class KosSayaResource extends Resource
                 Tables\Columns\TextColumn::make('nama_properti')->label('Nama Properti'),
                 Tables\Columns\TextColumn::make('alamat_properti')->label('Alamat')->limit(50)->html(),
                 
-                // ✅ Kolom status yang lebih cerdas
+                
                 BadgeColumn::make('status_penyewaan')
                     ->label('Status Anda')
                     ->getStateUsing(function (Properti $record) {
-                        // Secara eksplisit mencari status penghuni yang relevan untuk properti ini
+                        
                         return $record->penghuni()
                                       ->where('email_penghuni', Auth::user()->email)
                                       ->whereIn('status_penghuni', ['Aktif', 'Pengajuan Berhenti'])
@@ -157,22 +157,19 @@ class KosSayaResource extends Resource
         return false;
     }
 
-    /**
-     * ✅ --- INI ADALAH "PENJAGA GERBANG" YANG SUDAH DIPERBAIKI --- ✅
-     */
+    
     public static function getEloquentQuery(): Builder
     {
-        // 1. Cari ID penghuni yang relevan (Aktif atau sedang mengajukan berhenti)
+        
         $penghuni = Penghuni::where('email_penghuni', Auth::user()->email)
                             ->whereIn('status_penghuni', ['Aktif', 'Pengajuan Berhenti'])
                             ->first();
 
-        // 2. Jika tidak ditemukan, jangan tampilkan properti apa pun.
+        
         if (!$penghuni) {
             return parent::getEloquentQuery()->whereNull('id');
         }
 
-        // 3. Jika ditemukan, tampilkan properti yang terhubung.
         return parent::getEloquentQuery()->where('id', $penghuni->properti_id);
     }
 }

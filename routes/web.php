@@ -6,6 +6,10 @@ use Laravel\Fortify\Http\Controllers\RegisteredUserController;
 use Laravel\Fortify\Http\Controllers\AuthenticatedSessionController;
 use App\Http\Controllers\Auth\PasswordResetLinkController; // <-- Controller untuk request link reset
 use App\Http\Controllers\Auth\NewPasswordController;
+use Illuminate\Http\Request;
+use Illuminate\Notifications\DatabaseNotification;
+
+
 
 // require_once base_path('routes/landing_page.php');
 
@@ -42,6 +46,15 @@ Route::middleware([
             default   => redirect('/'), // Fallback jika peran tidak dikenali
         };
     })->name('dashboard');
+
+Route::post('/notifications/{notification}/read', function (Request $request, DatabaseNotification $notification) {
+    // pastikan notifikasi memang milik user yang login
+    abort_unless($notification->notifiable_id === $request->user()->getAuthIdentifier(), 403);
+
+    $notification->markAsRead();
+    return back();
+})->middleware('auth')->name('notifications.read');
+
 });
 
 

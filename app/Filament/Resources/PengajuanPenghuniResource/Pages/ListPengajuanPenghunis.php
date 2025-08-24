@@ -15,7 +15,7 @@ class ListPengajuanPenghunis extends ListRecords
 
     protected function getHeaderActions(): array
     {
-        // Tidak ada tombol Create di header
+        
         return [];
     }
 
@@ -32,5 +32,5 @@ class ListPengajuanPenghunis extends ListRecords
         ];
     }
 
-    // Kita tidak lagi mendefinisikan getTableActions() di sini.
+
 }

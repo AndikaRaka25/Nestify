@@ -11,19 +11,19 @@ class TagihanStatsOverview extends BaseWidget
 {
     protected function getStats(): array
     {
-        // Menghitung jumlah penghuni yang statusnya 'Aktif'
+        
         $jumlahPenghuniAktif = Penghuni::where('status_penghuni', 'Aktif')->count();
 
-        // Menghitung total pendapatan dari tagihan yang lunas bulan ini
+        
         $pendapatanBulanIni = Tagihan::where('status', 'Lunas')
             ->whereMonth('tanggal_bayar', now()->month)
             ->whereYear('tanggal_bayar', now()->year)
             ->sum('total_tagihan');
 
-        // Menghitung jumlah tagihan yang belum lunas
+        
         $jumlahTagihanAktif = Tagihan::whereIn('status', ['Belum Bayar', 'Butuh Konfirmasi'])->count();
         
-        // Menghitung total nominal tagihan yang belum lunas
+    
         $totalTagihanAktif = Tagihan::whereIn('status', ['Belum Bayar', 'Butuh Konfirmasi'])->sum('total_tagihan');
 
         return [

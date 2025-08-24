@@ -15,12 +15,10 @@ class TagihanChart extends ChartWidget
 
      protected int | string | array $columnSpan = 1;
 
-    // Nilai default null akan mewakili 'Semua Properti'
+    
     public ?string $filter = null; 
 
-    /**
-     * ✅ Tetap menggunakan getFilters() sesuai permintaan Anda.
-     */
+    
     protected function getFilters(): ?array
     {
         $propertiOptions = Properti::where('user_id', Auth::id())
@@ -30,11 +28,7 @@ class TagihanChart extends ChartWidget
         return [null => 'Semua Properti'] + $propertiOptions;
     }
 
-    /**
-     * ✅ --- INI ADALAH "KABEL" YANG HILANG --- ✅
-     * Fungsi ini adalah "hook" dari Livewire. Ia akan otomatis berjalan
-     * setiap kali properti publik '$filter' diperbarui oleh dropdown.
-     */
+    
     public function updatedFilter(): void
     {
         $this->updateChartData();
@@ -46,7 +40,7 @@ class TagihanChart extends ChartWidget
         $labels = [];
         $dataPoints = [];
 
-        // ✅ Rentang waktu diubah menjadi 6 bulan
+        
         for ($i = 5; $i >= 0; $i--) {
             $month = now()->subMonths($i);
             $labels[] = $month->format('M Y');
@@ -57,7 +51,7 @@ class TagihanChart extends ChartWidget
             ->where('status', 'Lunas')
             ->whereBetween('tanggal_bayar', [now()->subMonths(5)->startOfMonth(), now()->endOfMonth()]);
 
-        // ✅ Logika filter sekarang akan bekerja
+        
         if (!is_null($activeFilter) && $activeFilter !== '') {
             $query->where('properti_id', $activeFilter);
         } else {

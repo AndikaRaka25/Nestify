@@ -41,7 +41,6 @@ class PropertiResource extends Resource
     public static function form(Form $form): Form
 {
     return $form->schema([
-            // Grid utama yang membagi layout menjadi 2 kolom (2/3 dan 1/3)
             Forms\Components\Grid::make()
                 ->columns(3)
                 ->schema([
@@ -145,10 +144,6 @@ class PropertiResource extends Resource
                                         ->label('Foto Properti')
                                         ->multiple()->reorderable()->disk('public')->directory('kos_foto')
                                         ->image()->imageEditor()->maxFiles(5),
-                                    
-                                    // Placeholder untuk Map, bisa diintegrasikan nanti
-                                    // Forms\Components\ViewField::make('map')
-                                    //     ->view('filament.forms.components.map-picker'), 
                                     TextInput::make('latitude')->hidden(),
                                     TextInput::make('longitude')->hidden(),
                                   

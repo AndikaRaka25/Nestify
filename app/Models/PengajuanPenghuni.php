@@ -12,8 +12,7 @@ class PengajuanPenghuni extends Penghuni // Meng-extend model Penghuni
     // Menentukan tabel yang digunakan tetap 'penghunis'
     protected $table = 'penghunis';
 
-    // Secara otomatis menambahkan filter global untuk hanya menampilkan
-    // penghuni dengan status 'Pengajuan'.
+    
     protected static function booted(): void
     {
         static::addGlobalScope('hanyaPengajuan', function ($builder) {

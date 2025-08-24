@@ -12,7 +12,7 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Filament\Tables\Actions\Action;
 use Filament\Notifications\Notification;
-use Illuminate\Support\Facades\DB; // 💡 Pastikan DB Facade di-import
+use Illuminate\Support\Facades\DB; 
 
 class KelolaKomplainResource extends Resource
 {
@@ -24,10 +24,10 @@ class KelolaKomplainResource extends Resource
     {
          return $form
             ->schema([
-                // ✅ --- PERBAIKAN DI SINI --- ✅
+                
                 Forms\Components\Select::make('penghuni_id')
                     ->label('Pelapor')
-                    ->relationship('penghuni', 'nama_penghuni') // Mengambil nama dari relasi 'penghuni'
+                    ->relationship('penghuni', 'nama_penghuni') 
                     ->disabled(), // Dibuat read-only
 
                 Forms\Components\Select::make('kamar_id')
@@ -39,7 +39,7 @@ class KelolaKomplainResource extends Resource
                 Forms\Components\Textarea::make('deskripsi')->disabled()->columnSpanFull(),
                 Forms\Components\FileUpload::make('lampiran')
                     ->label('Lampiran Foto')
-                    ->multiple() // Pastikan ini ada agar bisa menampilkan banyak foto
+                    ->multiple() 
                     ->image()
                     ->disabled(),
             ]);

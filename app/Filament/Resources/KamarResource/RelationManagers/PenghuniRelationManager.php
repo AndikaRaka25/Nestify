@@ -53,15 +53,14 @@ class PenghuniRelationManager extends RelationManager
                 //
             ])
             ->headerActions([
-                // Kita nonaktifkan tombol 'Create' karena penghuni dibuat dari menu utama
-                // Tables\Actions\CreateAction::make(),
+                
             ])
             ->actions([
-                // Hanya izinkan untuk melihat detail, bukan mengedit dari sini
+                
                 Tables\Actions\ViewAction::make(),
             ])
             ->bulkActions([
-                //
+                
             ]);
     }
 }

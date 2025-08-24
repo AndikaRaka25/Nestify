@@ -3,8 +3,11 @@
     namespace App\Providers;
     
     use Illuminate\Support\ServiceProvider;
-    use App\Models\Tagihan; // <-- 1. Import model Tagihan
-    use App\Observers\TagihanObserver; // <-- 2. Import Observer Anda
+    use App\Models\Tagihan; 
+    use App\Observers\TagihanObserver; 
+    use App\Models\Penghuni;
+use App\Observers\PenghuniObserver;
+
     
     class AppServiceProvider extends ServiceProvider
     {
@@ -21,8 +24,9 @@
          */
         public function boot(): void
         {
-            // ✅ --- 3. DAFTARKAN OBSERVER DI SINI --- ✅
+            
             Tagihan::observe(TagihanObserver::class);
+            Penghuni::observe(PenghuniObserver::class);
         }
     }
     

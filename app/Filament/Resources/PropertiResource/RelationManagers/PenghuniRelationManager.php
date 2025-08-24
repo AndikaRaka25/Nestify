@@ -50,10 +50,10 @@ class PenghuniRelationManager extends RelationManager
                     ->sortable(),
             ])
             ->filters([
-                // Filter tidak diperlukan karena kita sudah memfilter penghuni aktif
+                
             ])
             ->headerActions([
-                // ✅ --- PERBAIKAN DI SINI: Arahkan ke halaman create PenghuniResource --- ✅
+                
                 Tables\Actions\CreateAction::make()
                     ->label('Tambah Penghuni Baru')
                     ->url(fn (): string => PenghuniResource::getUrl('create', ['properti_id' => $this->getOwnerRecord()->id])),

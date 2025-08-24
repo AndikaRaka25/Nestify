@@ -15,7 +15,7 @@ class ListKelolaKomplains extends ListRecords
     protected function getHeaderActions(): array
     {
         return [
-            // Tombol create dinonaktifkan karena komplain dibuat oleh penyewa
+            
         ];
     }
 
@@ -26,11 +26,9 @@ class ListKelolaKomplains extends ListRecords
             'semua' => ListRecords\Tab::make('Semua'),
             'aktif' => ListRecords\Tab::make('Aktif')
                 ->modifyQueryUsing(fn (Builder $query) => $query->whereIn('status', ['pending', 'proses']))
-                // Menggunakan DB Facade untuk badge count
                 ->badge(DB::table('kelola_komplains')->whereIn('status', ['pending', 'proses'])->count()),
             'selesai' => ListRecords\Tab::make('Selesai')
                 ->modifyQueryUsing(fn (Builder $query) => $query->where('status', 'selesai'))
-                 // Menggunakan DB Facade untuk badge count
                 ->badge(DB::table('kelola_komplains')->where('status', 'selesai')->count()),
         ];
     }

@@ -26,7 +26,7 @@ class TagihanResource extends Resource
     {
         return $form
             ->schema([
-                // --- PERBAIKAN DI SINI: Menggunakan Placeholder ---
+            
                 Forms\Components\Placeholder::make('nama_penghuni')
                     ->label('Nama Penghuni')
                     ->content(fn (?Tagihan $record): string => $record?->penghuni?->nama_penghuni ?? '-'),
@@ -39,7 +39,7 @@ class TagihanResource extends Resource
                     ->label('Kamar')
                     ->content(fn (?Tagihan $record): string => $record?->kamar?->nama_kamar ?? '-'),
                 
-                // Kolom lain yang tidak perlu diedit juga lebih baik menggunakan Placeholder
+                
                 Forms\Components\Placeholder::make('invoice_number')
                     ->label('Nomor Invoice')
                     ->content(fn (?Tagihan $record): string => $record?->invoice_number ?? '-'),

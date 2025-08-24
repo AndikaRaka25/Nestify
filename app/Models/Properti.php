@@ -34,7 +34,7 @@ class Properti extends Model
         'harga_sewa' => 'array', 
         'biaya_tambahan' => 'array', 
         'info_pembayaran' => 'array', 
-        'discounts' => 'array', // Pastikan ini sesuai dengan tipe data yang Anda inginkan
+        'discounts' => 'array', 
     ];
 
     public function user(): BelongsTo
@@ -57,6 +57,10 @@ class Properti extends Model
     {
         return $this->hasMany(Penghuni::class);
     }
+    // Properti.php
+public function pemilik() { return $this->belongsTo(User::class,'user_id'); }
+
+
 
 protected static function boot()
 {

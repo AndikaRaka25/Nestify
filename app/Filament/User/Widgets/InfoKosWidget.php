@@ -15,7 +15,7 @@ class InfoKosWidget extends Widget
 
     public function mount(): void
     {
-        // Mengambil data penghuni yang aktif saat widget di-load
+        
         $this->penghuni = Penghuni::where('email_penghuni', Auth::user()->email)
             ->where('status_penghuni', 'Aktif')
             ->with(['properti.user', 'kamar']) // Eager load relasi

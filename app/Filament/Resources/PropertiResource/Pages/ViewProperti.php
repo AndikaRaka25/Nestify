@@ -31,9 +31,5 @@ class ViewProperti extends ViewRecord
         ];
     }
 
-    // HAPUS SELURUH METHOD getFormSchema() DARI SINI
-    // protected function getFormSchema(): array
-    // {
-    //     // ... KODE LAMA DI SINI ...
-    // }
+    
 }

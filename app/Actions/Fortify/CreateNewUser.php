@@ -28,7 +28,7 @@ class CreateNewUser implements CreatesNewUsers
             'role' => ['required', 'string', Rule::in(['pemilik', 'penyewa'])],
         ])->validate();
 
-        // 1. Buat user dan simpan ke variabel $user
+        
         $user = User::create([
             'name' => $input['name'],
             'email' => $input['email'],

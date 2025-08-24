@@ -125,7 +125,6 @@ class PenghuniResource extends Resource
             return;
         }
 
-        // --- Menghitung Harga Sewa (Logika ini sudah benar) ---
         $hargaSewaData = $kamar->properti->harga_sewa ?? [];
         $hargaUnit = 0;
         $hargaKey = match ($durasiUnit) {
@@ -140,7 +139,6 @@ class PenghuniResource extends Resource
         }
         $totalHargaSewa = (float)$hargaUnit * (int)$durasiAngka;
 
-        // --- Menghitung Biaya Tambahan (Logika BARU ditambahkan di sini) ---
         $biayaTambahanData = $kamar->properti->biaya_tambahan ?? [];
         $totalBiayaTambahan = 0;
         if (is_array($biayaTambahanData)) {
@@ -153,7 +151,7 @@ class PenghuniResource extends Resource
         $totalTagihanAkhir = $totalHargaSewa + $totalBiayaTambahan;
         $set('total_tagihan', $totalTagihanAkhir);
 
-        // --- Menghitung Jatuh Tempo (Logika ini sudah benar) ---
+        
         $tanggalMulai = Carbon::parse($mulaiSewa);
         $jatuhTempo = match ($durasiUnit) {
             'hari' => $tanggalMulai->addDays((int)$durasiAngka),
@@ -192,10 +190,9 @@ class PenghuniResource extends Resource
                     ->icon('heroicon-o-banknotes')
                     ->color('info')
                     ->requiresConfirmation()
-                    // Tombol ini hanya akan muncul jika penghuni belum punya tagihan
                     ->visible(fn (Penghuni $record): bool => !$record->tagihan()->exists())
                     ->action(function (Penghuni $record) {
-                        // Logika yang sama persis dengan yang ada di model
+                        
                         Tagihan::create([
                             'penghuni_id' => $record->id,
                             'properti_id' => $record->properti_id,

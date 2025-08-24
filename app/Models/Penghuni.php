@@ -59,20 +59,20 @@ class Penghuni extends Model
     /**
      * Mendefinisikan relasi: Satu Penghuni berada di satu Properti.
      */
-    public function properti(): BelongsTo
-    {
-        return $this->belongsTo(Properti::class);
-    }
+
 
     public function tagihan(): HasMany
     {
         return $this->hasMany(Tagihan::class);
     }
 
+// Penghuni.php
+public function properti() { return $this->belongsTo(Properti::class,'properti_id'); }
+
    
     protected static function booted(): void
     {
-        // Event ini akan berjalan SETELAH seorang penghuni berhasil dibuat di database.
+        
         static::created(function (Penghuni $penghuni) {
             // 1. Update status kamar menjadi 'Aktif' (Terisi)
             if ($penghuni->kamar_id) {
@@ -104,7 +104,7 @@ class Penghuni extends Model
             }
         });
 
-        // Event ini akan berjalan SETELAH seorang penghuni dihapus dari database.
+        
         static::deleted(function (Penghuni $penghuni) {
             // Update status kamar kembali menjadi 'Kosong'
             if ($penghuni->kamar_id) {

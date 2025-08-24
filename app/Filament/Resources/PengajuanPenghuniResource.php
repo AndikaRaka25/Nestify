@@ -79,17 +79,17 @@ class PengajuanPenghuniResource extends Resource
                 //
             ])
             ->actions([
-                // ✅ --- SEMUA TOMBOL AKSI SEKARANG DIDEFINISIKAN DI SINI --- ✅
+                
                 Action::make('konfirmasi_masuk')
                 ->label('Konfirmasi Masuk')
                 ->icon('heroicon-o-check-circle')->color('success')
                 ->visible(fn (Penghuni $record): bool => $record->status_penghuni === 'Pengajuan')
                 ->form([
-                    // Form ini HANYA akan muncul jika kamar_id pada data pengajuan masih kosong
+                    
                     Select::make('kamar_id')
                         ->label('Pilih Kamar Untuk Ditempati')
                         ->options(function (Penghuni $record) {
-                            // Ambil kamar yang statusnya 'Kosong' di properti yang sama
+                            
                             return Kamar::where('properti_id', $record->properti_id)
                                         ->where('status_kamar', 'Kosong')
                                         ->pluck('nama_kamar', 'id');
@@ -98,7 +98,7 @@ class PengajuanPenghuniResource extends Resource
                         ->searchable()
                         ->placeholder('Pilih kamar yang tersedia')
                         ->helperText('Pilih kamar yang akan ditempati oleh penyewa ini.')
-                        // Hanya tampilkan field ini jika kamar_id di record kosong
+                        
                         ->visible(fn (Penghuni $record) => is_null($record->kamar_id)),
                 ])
                 ->requiresConfirmation()
@@ -112,11 +112,7 @@ class PengajuanPenghuniResource extends Resource
                         return;
                     }
                     $totalTagihanAwal = (float) $record->total_tagihan;
-
-                        // Langkah 2: Ambil semua biaya tambahan dari properti terkait
                         $biayaTambahan = $record->properti->biaya_tambahan ?? [];
-
-                        // Langkah 3: Hitung total dari semua biaya tambahan
                         $totalBiayaTambahan = 0;
                         if (is_array($biayaTambahan)) {
                             foreach ($biayaTambahan as $biaya) {
@@ -124,16 +120,13 @@ class PengajuanPenghuniResource extends Resource
                             }
                         }
 
-                        // Langkah 4: Kalkulasi total tagihan akhir
                         $totalTagihanAkhir = $totalTagihanAwal + $totalBiayaTambahan;
 
-                    // Update data penyewa dengan status dan kamar_id yang valid
                     $record->update([
                         'status_penghuni' => 'Aktif',
                         'kamar_id' => $kamarIdTerpilih
                     ]);
 
-                    // Update status kamar menjadi terisi
                     Kamar::find($kamarIdTerpilih)->update(['status_kamar' => 'Aktif']);
                    $parts = explode(' ', $record->durasi_sewa);
                         $durasiAngka = (int) ($parts[0] ?? 1);
@@ -142,7 +135,7 @@ class PengajuanPenghuniResource extends Resource
                         
                         $tanggalMulai = Carbon::parse($record->mulai_sewa);
 
-                        // ✅ PERBAIKAN UTAMA: Perhitungan jatuh tempo yang akurat
+                        
                         $jatuhTempoPertama = $tanggalMulai->copy(); // Salin tanggal mulai
                         match ($durasiUnit) {
                             'hari'   => $jatuhTempoPertama->addDays(1),
@@ -151,7 +144,7 @@ class PengajuanPenghuniResource extends Resource
                             'tahun'  => $jatuhTempoPertama->addYears(1),
                         };
 
-                    // Buat tagihan pertama dengan data yang sudah valid
+                    
                     Tagihan::create([
                         'penghuni_id' => $record->id,
                         'properti_id' => $record->properti_id,
@@ -204,7 +197,6 @@ class PengajuanPenghuniResource extends Resource
     {
         return [
             'index' => Pages\ListPengajuanPenghunis::route('/'),
-            // Kita akan menggunakan ViewAction bawaan, tidak perlu halaman view kustom
         ];
     }
 }

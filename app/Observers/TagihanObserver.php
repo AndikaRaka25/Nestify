@@ -26,7 +26,6 @@ class TagihanObserver
 
             if ($jumlahTagihanLunas < $durasiAngka) {
                 
-                // ✅ PERBAIKAN UTAMA: Hitung dari jatuh tempo tagihan yang BARU lunas
                 $jatuhTempoSebelumnya = Carbon::parse($tagihan->jatuh_tempo);
 
                 $jatuhTempoBerikutnya = $jatuhTempoSebelumnya->copy(); // Salin tanggal jatuh tempo sebelumnya
@@ -37,8 +36,7 @@ class TagihanObserver
                     'year', 'tahun'  => $jatuhTempoBerikutnya->addYears(1),
                 };
                 
-                // Anda mungkin perlu logika ulang untuk harga sewa per periode di sini
-                // Untuk sementara kita gunakan total_tagihan dari penghuni
+                
                 $hargaPeriodeBerikutnya = $penghuni->total_tagihan;
 
                 Tagihan::create([
