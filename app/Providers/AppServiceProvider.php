@@ -7,8 +7,13 @@
     use App\Observers\TagihanObserver; 
     use App\Models\Penghuni;
 use App\Observers\PenghuniObserver;
+use App\Observers\TagihanNotifObserver; 
+use Illuminate\Container\Attributes\Tag;
+use App\Observers\TagihanKonfirmasiObserver;
+use App\Observers\TagihanPenghuniObserver;
+use App\Observers\KelolaKomplainObserver;
+use App\Models\KelolaKomplain;
 
-    
     class AppServiceProvider extends ServiceProvider
     {
         /**
@@ -27,6 +32,10 @@ use App\Observers\PenghuniObserver;
             
             Tagihan::observe(TagihanObserver::class);
             Penghuni::observe(PenghuniObserver::class);
+            Tagihan::observe(TagihanNotifObserver::class);
+            Tagihan::observe(TagihanKonfirmasiObserver::class);
+            Tagihan::observe(TagihanPenghuniObserver::class);
+            KelolaKomplain::observe(KelolaKomplainObserver::class);
         }
     }
     

@@ -36,14 +36,13 @@ class Tagihan extends Model
         'applied_discount_details' => 'array', // Pastikan ini di-cast sebagai array
     ];
 
-    public function penghuni(): BelongsTo
-    {
-        return $this->belongsTo(Penghuni::class);
+     public function penghuni()  { 
+        return $this->belongsTo(Penghuni::class, 'penghuni_id'); 
     }
 
     public function properti(): BelongsTo
     {
-        return $this->belongsTo(Properti::class);
+        return $this->belongsTo(Properti::class, 'properti_id');
     }
 
     public function kamar(): BelongsTo
